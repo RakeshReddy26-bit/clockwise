@@ -1,0 +1,56 @@
+{
+  "common": {
+    "appName": "Clockwise",
+    "signOut": "Sign out",
+    "language": "Language",
+    "german": "German",
+    "english": "English",
+    "comingSoon": "This area unlocks in the next phase.",
+    "comingSoonTitle": "Coming soon",
+    "loading": "Loading …",
+    "error": "Something went wrong. Please try again."
+  },
+  "auth": {
+    "title": "Sign in",
+    "subtitle": "Sign in with your company account.",
+    "email": "Email address",
+    "password": "Password",
+    "submit": "Sign in",
+    "invalidCredentials": "Email or password is incorrect.",
+    "noMembership": "Your account is not linked to any company. Please contact your administration."
+  },
+  "managerNav": {
+    "dashboard": "Dashboard",
+    "employees": "Employees",
+    "recruitment": "Recruitment",
+    "jobs": "Jobs",
+    "shifts": "Shift planning",
+    "time": "Working time",
+    "absences": "Absences",
+    "calendar": "Calendar",
+    "news": "News",
+    "messages": "Messages",
+    "documents": "Documents",
+    "settings": "Settings"
+  },
+  "employeeNav": {
+    "home": "Home",
+    "shifts": "My shifts",
+    "time": "Working time",
+    "calendar": "Calendar",
+    "messages": "Messages",
+    "documents": "Documents",
+    "requests": "Requests",
+    "profile": "Profile"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back, {name}",
+    "foundationNote": "Foundation is in place. Metrics and activity arrive in Phase 1B."
+  },
+  "home": {
+    "title": "Home",
+    "welcome": "Hello, {name}",
+    "foundationNote": "Foundation is in place. Your shifts and time tracking arrive in the next phases."
+  }
+}

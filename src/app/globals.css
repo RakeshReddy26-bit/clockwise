@@ -1,42 +1,104 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+  Clockwise design tokens.
+  --brand-* variables are the tenant-branding hook: they are overridden
+  per company at runtime (see BrandingProvider) from companies.settings.
+*/
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --brand-accent: #0e6e68;
+  --brand-accent-foreground: #ffffff;
+
+  --background: #f5f8f8;
+  --foreground: #1a2b2e;
+  --card: #ffffff;
+  --card-foreground: #1a2b2e;
+  --popover: #ffffff;
+  --popover-foreground: #1a2b2e;
+  --primary: var(--brand-accent);
+  --primary-foreground: var(--brand-accent-foreground);
+  --secondary: #edf2f2;
+  --secondary-foreground: #1a2b2e;
+  --muted: #edf2f2;
+  --muted-foreground: #54696c;
+  --accent: #e1efee;
+  --accent-foreground: #0a4f4b;
+  --destructive: #b3261e;
+  --destructive-foreground: #ffffff;
+  --success: #2e7d32;
+  --success-foreground: #ffffff;
+  --warning: #9a5b00;
+  --warning-foreground: #ffffff;
+  --border: #d9e2e2;
+  --input: #c6d3d3;
+  --ring: #0e6e68;
+  --radius: 0.5rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+.dark {
+  --background: #0f1718;
+  --foreground: #e3ecec;
+  --card: #162122;
+  --card-foreground: #e3ecec;
+  --popover: #162122;
+  --popover-foreground: #e3ecec;
+  --secondary: #1c2a2b;
+  --secondary-foreground: #e3ecec;
+  --muted: #1c2a2b;
+  --muted-foreground: #8fa3a4;
+  --accent: #15302f;
+  --accent-foreground: #8ad6cf;
+  --destructive: #e38078;
+  --destructive-foreground: #1a0b0a;
+  --success: #7cc282;
+  --success-foreground: #0c2010;
+  --warning: #e0a648;
+  --warning-foreground: #241a05;
+  --border: #25383a;
+  --input: #31474a;
+  --ring: #4fb3ab;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+    outline-color: color-mix(in oklab, var(--color-ring) 50%, transparent);
   }
-}
-
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-feature-settings: "tnum";
   }
 }

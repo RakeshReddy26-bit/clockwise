@@ -1,0 +1,56 @@
+{
+  "common": {
+    "appName": "Clockwise",
+    "signOut": "Abmelden",
+    "language": "Sprache",
+    "german": "Deutsch",
+    "english": "Englisch",
+    "comingSoon": "Dieser Bereich wird in der nächsten Phase freigeschaltet.",
+    "comingSoonTitle": "Bald verfügbar",
+    "loading": "Wird geladen …",
+    "error": "Etwas ist schiefgelaufen. Bitte erneut versuchen."
+  },
+  "auth": {
+    "title": "Anmelden",
+    "subtitle": "Melden Sie sich mit Ihrem Firmenkonto an.",
+    "email": "E-Mail-Adresse",
+    "password": "Passwort",
+    "submit": "Anmelden",
+    "invalidCredentials": "E-Mail oder Passwort ist falsch.",
+    "noMembership": "Ihr Konto ist keinem Unternehmen zugeordnet. Bitte wenden Sie sich an Ihre Verwaltung."
+  },
+  "managerNav": {
+    "dashboard": "Dashboard",
+    "employees": "Mitarbeiter",
+    "recruitment": "Recruiting",
+    "jobs": "Aufträge",
+    "shifts": "Schichtplanung",
+    "time": "Arbeitszeit",
+    "absences": "Abwesenheiten",
+    "calendar": "Kalender",
+    "news": "Neuigkeiten",
+    "messages": "Nachrichten",
+    "documents": "Dokumente",
+    "settings": "Einstellungen"
+  },
+  "employeeNav": {
+    "home": "Start",
+    "shifts": "Meine Schichten",
+    "time": "Arbeitszeit",
+    "calendar": "Kalender",
+    "messages": "Nachrichten",
+    "documents": "Dokumente",
+    "requests": "Anträge",
+    "profile": "Profil"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Willkommen zurück, {name}",
+    "foundationNote": "Grundgerüst eingerichtet. Kennzahlen und Aktivitäten folgen in Phase 1B."
+  },
+  "home": {
+    "title": "Start",
+    "welcome": "Hallo, {name}",
+    "foundationNote": "Grundgerüst eingerichtet. Ihre Schichten und die Zeiterfassung folgen in den nächsten Phasen."
+  }
+}

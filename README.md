@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Clockwise
 
-## Getting Started
+Workforce management for German staffing, security, cleaning, facility and
+service SMBs. Next.js 15 full-stack · Supabase (Postgres, Auth, Realtime,
+Storage) · Railway hosting. Architecture Pack v2 is the implementation
+contract.
 
-First, run the development server:
+## Stack
+
+- Next.js 15 (App Router, TypeScript, Turbopack), Tailwind CSS v4, shadcn-style UI components
+- Supabase: sole database + auth + realtime + storage (EU region recommended)
+- next-intl: German default, English toggle (cookie-based)
+- Vitest: RBAC unit tests + RLS tenant-isolation tests against local Postgres
+
+## Local development
 
 ```bash
+npm install
+cp .env.example .env.local     # fill in your Supabase values
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Supabase setup (once)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Create a project at supabase.com (region: EU / Frankfurt).
+2. Run the migrations in order in the SQL editor (or via supabase CLI):
+   - `supabase/migrations/0001_schema.sql`
+   - `supabase/migrations/0002_rls.sql`
+   - `supabase/migrations/0003_auth_profile_trigger.sql`
+3. Seed demo data: `npm run seed` (needs `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Tests
 
-## Learn More
+Isolation tests need a local Postgres with a `clockwise_owner` superuser
+(password `clockwise`). They rebuild a scratch database on every run:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run typecheck
+npm run test
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deployment (Railway)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Connect the GitHub repo; `railway.json` selects the Dockerfile build.
+- Set variables: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  (also as build args — Railway passes service variables to Docker builds
+  automatically) and `SUPABASE_SERVICE_ROLE_KEY` (runtime only, server-side).
+- Healthcheck: `/api/health`.
 
-## Deploy on Vercel
+Secrets live in environment variables only. The service-role key is never
+exposed with a `NEXT_PUBLIC_` prefix and never reaches client code
+(`server-only` guard in `src/lib/supabase/admin.ts`).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Authorization model
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+JWT claims are convenience only. Sensitive Server Actions validate:
+authenticated user → active `company_memberships` row → role/permission
+(`src/lib/permissions.ts`) → resource tenant/ownership → RLS as the final
+database isolation layer (`supabase/migrations/0002_rls.sql`).
