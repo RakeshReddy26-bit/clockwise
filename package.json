@@ -11,7 +11,8 @@
     "test": "vitest run",
     "seed": "tsx scripts/seed.ts",
     "backfill:coords": "tsx scripts/backfill-location-coords.ts",
-    "rename:demo-company": "tsx scripts/rename-demo-company.ts"
+    "rename:demo-company": "tsx scripts/rename-demo-company.ts",
+    "generalize:demo-data": "tsx scripts/generalize-demo-data.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",

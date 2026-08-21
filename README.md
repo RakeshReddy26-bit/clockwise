@@ -38,6 +38,8 @@ Targeted, idempotent, non-destructive — they never reseed or delete:
 
 - `npm run backfill:coords` — set worksite coordinates and geofence radius on existing locations.
 - `npm run rename:demo-company` — one-time rename of the demo company row (`companies.name` only).
+- `npm run generalize:demo-data -- --dry` — preview the industry-neutral demo-data update.
+- `npm run generalize:demo-data` — apply it (departments, positions, shift roles/instructions, job posting, news).
 
 ## Tests
 
