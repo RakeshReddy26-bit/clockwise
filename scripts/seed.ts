@@ -40,12 +40,13 @@ const EMPLOYEES: string[] = [
 ];
 
 const DEPARTMENTS = ["Sicherheitsdienst", "Gebäudereinigung", "Facility Service"];
-const LOCATIONS: Array<[string, string]> = [
-  ["Zentrale Berlin-Mitte", "Chausseestraße 12, 10115 Berlin"],
-  ["Bürocampus Adlershof", "Rudower Chaussee 5, 12489 Berlin"],
-  ["Logistikpark Großbeeren", "Am Wall 3, 14979 Großbeeren"],
-  ["Einkaufszentrum Spandau", "Klosterstraße 8, 13581 Berlin"],
-  ["Klinikum Buch", "Lindenberger Weg 27, 13125 Berlin"],
+// [name, address, lat, lng, geofence radius m]
+const LOCATIONS: Array<[string, string, number, number, number]> = [
+  ["Zentrale Berlin-Mitte", "Chausseestraße 12, 10115 Berlin", 52.53245, 13.38344, 100],
+  ["Bürocampus Adlershof", "Rudower Chaussee 5, 12489 Berlin", 52.43033, 13.53245, 150],
+  ["Logistikpark Großbeeren", "Am Wall 3, 14979 Großbeeren", 52.35871, 13.30012, 250],
+  ["Einkaufszentrum Spandau", "Klosterstraße 8, 13581 Berlin", 52.53514, 13.19825, 100],
+  ["Klinikum Buch", "Lindenberger Weg 27, 13125 Berlin", 52.62612, 13.50291, 150],
 ];
 const CLIENTS = [
   "Nordfeld Logistik GmbH", "CityCarré Verwaltung", "TechPark Adlershof AG",
@@ -108,7 +109,10 @@ async function main() {
   const cid = company.id;
 
   const locations = await insert("locations",
-    LOCATIONS.map(([name, address]) => ({ company_id: cid, name, address })));
+    LOCATIONS.map(([name, address, lat, lng, radius]) => ({
+      company_id: cid, name, address, lat, lng,
+      geofence_radius_m: radius, geofence_enabled: true,
+    })));
   const departments = await insert("departments",
     DEPARTMENTS.map((name) => ({ company_id: cid, name })));
 

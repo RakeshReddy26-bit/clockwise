@@ -65,6 +65,7 @@ beforeAll(async () => {
   await db.query(sqlFile("..", "..", "supabase", "migrations", "0001_schema.sql"));
   await db.query(sqlFile("..", "..", "supabase", "migrations", "0002_rls.sql"));
   await db.query(sqlFile("..", "..", "supabase", "migrations", "0003_auth_profile_trigger.sql"));
+  await db.query(sqlFile("..", "..", "supabase", "migrations", "0004_geofencing.sql"));
   await db.query(sqlFile("01-test-fixtures.sql"));
 }, 60_000);
 

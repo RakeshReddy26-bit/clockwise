@@ -33,9 +33,18 @@ insert into public.employees (id, company_id, profile_id, employee_no, full_name
   ('aaaa1111-0000-0000-0000-000000000002', '11111111-0000-0000-0000-000000000000', null, 'A-002', 'Colleague A'),
   ('bbbb1111-0000-0000-0000-000000000001', '22222222-0000-0000-0000-000000000000', 'bbbbbbbb-0000-0000-0000-000000000003', 'B-001', 'Worker B');
 
-insert into public.jobs (id, company_id, client_name) values
-  ('aaaa2222-0000-0000-0000-000000000001', '11111111-0000-0000-0000-000000000000', 'Kunde A'),
-  ('bbbb2222-0000-0000-0000-000000000001', '22222222-0000-0000-0000-000000000000', 'Kunde B');
+-- Synthetic site coordinates (no real employee locations)
+insert into public.locations (id, company_id, name, address, lat, lng, geofence_radius_m, geofence_enabled) values
+  ('aaaa0000-1111-0000-0000-000000000001', '11111111-0000-0000-0000-000000000000',
+   'Standort A', 'Teststraße 1', 52.52000, 13.40500, 100, true),
+  ('bbbb0000-1111-0000-0000-000000000001', '22222222-0000-0000-0000-000000000000',
+   'Standort B', 'Teststraße 2', 48.13710, 11.57540, 100, true);
+
+insert into public.jobs (id, company_id, client_name, location_id) values
+  ('aaaa2222-0000-0000-0000-000000000001', '11111111-0000-0000-0000-000000000000', 'Kunde A',
+   'aaaa0000-1111-0000-0000-000000000001'),
+  ('bbbb2222-0000-0000-0000-000000000001', '22222222-0000-0000-0000-000000000000', 'Kunde B',
+   'bbbb0000-1111-0000-0000-000000000001');
 
 insert into public.shifts (id, company_id, job_id, date, start_time, end_time, required_count) values
   ('aaaa3333-0000-0000-0000-000000000001', '11111111-0000-0000-0000-000000000000',
