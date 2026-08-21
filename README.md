@@ -1,9 +1,12 @@
 # Clockwise
 
-Workforce management for German staffing, security, cleaning, facility and
-service SMBs. Next.js 15 full-stack · Supabase (Postgres, Auth, Realtime,
-Storage) · Railway hosting. Architecture Pack v2 is the implementation
-contract.
+A workforce operations platform for service companies that assign employees
+to shifts and client sites — cleaning, facility management, logistics,
+hospitality, event and temporary staffing, maintenance, retail and healthcare
+support. Industry-neutral by design.
+
+Next.js 15 full-stack · Supabase (Postgres, Auth, Realtime, Storage) ·
+Railway hosting. Architecture Pack v2 is the implementation contract.
 
 ## Stack
 
@@ -28,6 +31,13 @@ npm run dev
    - `supabase/migrations/0002_rls.sql`
    - `supabase/migrations/0003_auth_profile_trigger.sql`
 3. Seed demo data: `npm run seed` (needs `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`).
+
+### Maintenance scripts
+
+Targeted, idempotent, non-destructive — they never reseed or delete:
+
+- `npm run backfill:coords` — set worksite coordinates and geofence radius on existing locations.
+- `npm run rename:demo-company` — one-time rename of the demo company row (`companies.name` only).
 
 ## Tests
 

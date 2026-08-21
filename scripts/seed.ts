@@ -1,5 +1,5 @@
 /**
- * Clockwise demo seed — Meridian Sicherheit & Service GmbH (fictional).
+ * Clockwise demo seed — Meridian Facility & Service GmbH (fictional).
  * Run:  npm run seed
  * Needs NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in .env.local.
  * Creates auth users (password below), one tenant, and realistic German data.
@@ -12,7 +12,7 @@ config({ path: ".env.local" });
 config();
 
 const DEMO_PASSWORD = "Clockwise!Demo26";
-const COMPANY_NAME = "Meridian Sicherheit & Service GmbH";
+const COMPANY_NAME = "Meridian Facility & Service GmbH";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -39,7 +39,7 @@ const EMPLOYEES: string[] = [
   "Ibrahim Demir", "Franziska Ott", "Robert Zielinski", "Hannah Grote", "Tim Fassbender",
 ];
 
-const DEPARTMENTS = ["Sicherheitsdienst", "Gebäudereinigung", "Facility Service"];
+const DEPARTMENTS = ["Reinigung", "Gebäudetechnik", "Logistik & Event"];
 // [name, address, lat, lng, geofence radius m]
 const LOCATIONS: Array<[string, string, number, number, number]> = [
   ["Zentrale Berlin-Mitte", "Chausseestraße 12, 10115 Berlin", 52.53245, 13.38344, 100],
@@ -53,9 +53,9 @@ const CLIENTS = [
   "Klinikum Buch gGmbH", "Handelshof Spandau KG",
 ];
 const POSITIONS: Record<string, string[]> = {
-  Sicherheitsdienst: ["Sicherheitsmitarbeiter/in", "Objektschutz", "Empfangsdienst"],
-  "Gebäudereinigung": ["Reinigungskraft", "Vorarbeiter/in Reinigung"],
-  "Facility Service": ["Haustechniker/in", "Hausmeister/in"],
+  Reinigung: ["Reinigungskraft", "Vorarbeiter/in"],
+  "Gebäudetechnik": ["Haustechniker/in", "Hausmeister/in"],
+  "Logistik & Event": ["Lagerhelfer/in", "Servicekraft", "Empfangskraft"],
 };
 
 function day(offset: number): string {
@@ -185,7 +185,7 @@ async function main() {
       end_time: at(d, Math.min(startHour + 8, 23)),
       required_count: 1 + (s % 2),
       required_role: DEPARTMENTS[s % 3],
-      instructions: "Treffpunkt Haupteingang. Dienstkleidung erforderlich.",
+      instructions: "Treffpunkt Haupteingang. Arbeitskleidung erforderlich.",
       contact_person: "Marco Litfin (+49 152 5550100)",
     });
     if (s < 20) {
@@ -216,7 +216,7 @@ async function main() {
   ]);
 
   const postings = await insert("job_postings", [
-    { company_id: cid, title: "Sicherheitsmitarbeiter/in (m/w/d) – Vollzeit", description: "Objektschutz im Berliner Stadtgebiet. §34a erforderlich.", location_id: locations[0].id, employment_type: "full_time", published: true, published_at: new Date().toISOString() },
+    { company_id: cid, title: "Haustechniker/in (m/w/d) – Vollzeit", description: "Betreuung von Kundenobjekten im Berliner Stadtgebiet. Führerschein Klasse B erforderlich.", location_id: locations[0].id, employment_type: "full_time", published: true, published_at: new Date().toISOString() },
     { company_id: cid, title: "Reinigungskraft (m/w/d) – Teilzeit", description: "Unterhaltsreinigung Bürocampus Adlershof, Mo–Fr ab 17 Uhr.", location_id: locations[1].id, employment_type: "part_time", published: true, published_at: new Date().toISOString() },
   ]);
   await insert("applications", [
@@ -227,7 +227,7 @@ async function main() {
   ]);
 
   await insert("news_posts", [
-    { company_id: cid, title: "Neuer Standort: Klinikum Buch", body: "Ab September übernehmen wir den Empfangs- und Sicherheitsdienst am Klinikum Buch. Einsatzpläne folgen.", category: "Unternehmen", author_id: managerProfileIds[0], published_at: new Date().toISOString() },
+    { company_id: cid, title: "Neuer Standort: Klinikum Buch", body: "Ab September übernehmen wir den Reinigungs- und Facility-Service am Klinikum Buch. Einsatzpläne folgen.", category: "Unternehmen", author_id: managerProfileIds[0], published_at: new Date().toISOString() },
     { company_id: cid, title: "Arbeitsschutzunterweisung Q4", body: "Die jährliche Unterweisung findet im Oktober statt. Termine stehen im Kalender.", category: "Arbeitsschutz", author_id: managerProfileIds[1], published_at: new Date().toISOString() },
     { company_id: cid, title: "Feiertagszuschläge aktualisiert", body: "Ab dem 1. des Monats gelten die neuen Zuschlagssätze laut Aushang.", category: "Lohn", author_id: managerProfileIds[0], published_at: new Date().toISOString() },
   ]);

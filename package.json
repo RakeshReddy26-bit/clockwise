@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "seed": "tsx scripts/seed.ts",
-    "backfill:coords": "tsx scripts/backfill-location-coords.ts"
+    "backfill:coords": "tsx scripts/backfill-location-coords.ts",
+    "rename:demo-company": "tsx scripts/rename-demo-company.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",

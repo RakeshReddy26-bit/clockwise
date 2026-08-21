@@ -12,7 +12,10 @@ import { createClient } from "@supabase/supabase-js";
 config({ path: ".env.local" });
 config();
 
-const COMPANY_NAME = "Meridian Sicherheit & Service GmbH";
+const COMPANY_NAME = "Meridian Facility & Service GmbH";
+// Pre-rename name, so this script still works on a database that has not run
+// scripts/rename-demo-company.ts yet.
+const LEGACY_COMPANY_NAME = "Meridian Sicherheit & Service GmbH";
 
 // name → [lat, lng, geofence radius m]
 const COORDS: Record<string, [number, number, number]> = {
@@ -32,12 +35,12 @@ if (!url || !key) {
 const db = createClient(url, key, { auth: { persistSession: false } });
 
 async function main() {
-  const { data: company, error: cErr } = await db
+  const { data: companies, error: cErr } = await db
     .from("companies")
-    .select("id")
-    .eq("name", COMPANY_NAME)
-    .maybeSingle();
+    .select("id, name")
+    .in("name", [COMPANY_NAME, LEGACY_COMPANY_NAME]);
   if (cErr) throw new Error(cErr.message);
+  const company = companies?.[0];
   if (!company) {
     console.error(`Company "${COMPANY_NAME}" not found — nothing changed.`);
     process.exit(1);
