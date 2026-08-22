@@ -71,6 +71,26 @@ describe("localizeTerm", () => {
     expect(localizeTerm("Winterdienst", t_de)).toBe("Winterdienst");
   });
 
+  it("renders the Kiel/Rendsburg job roles in English", () => {
+    expect(localizeTerm("Logistikmitarbeiter/in", t_en)).toBe("Logistics Worker");
+    expect(localizeTerm("Parkservice-Mitarbeiter/in", t_en)).toBe("Parking Attendant");
+    expect(localizeTerm("Terminalmitarbeiter/in", t_en)).toBe("Terminal Staff");
+    expect(localizeTerm("Servicetechniker/in", t_en)).toBe("Service Technician");
+    expect(localizeTerm("Wartungstechniker/in", t_en)).toBe("Maintenance Technician");
+  });
+
+  it("keeps those roles in German when German is active", () => {
+    for (const role of [
+      "Logistikmitarbeiter/in",
+      "Parkservice-Mitarbeiter/in",
+      "Terminalmitarbeiter/in",
+      "Servicetechniker/in",
+      "Wartungstechniker/in",
+    ]) {
+      expect(localizeTerm(role, t_de)).toBe(role);
+    }
+  });
+
   it("never translates identities — companies, clients, sites, people, addresses", () => {
     const identities = [
       "Meridian Facility & Service GmbH",
@@ -134,6 +154,37 @@ describe("demo worksite localization", () => {
     expect(localizeSite(site, t_de)).toBe(site);
     // and the bare client name too
     expect(localizeSite("GE-PACK Services", t_en)).toBe("GE-PACK Services");
+  });
+
+  it("keeps every Kiel/Rendsburg worksite and client name unchanged in both languages", () => {
+    const identities = [
+      "Ostseekai Cruise Terminal",
+      "Schwedenkai",
+      "Norwegenkai",
+      "Ostuferhafen Cruise Terminal",
+      "Kiel Hauptbahnhof",
+      "Parkhaus ZOB",
+      "Förde-Parkhaus",
+      "Port Parking Kiel",
+      "Airport Kiel-Holtenau – North Parking",
+      "Airport Kiel-Holtenau – South Parking",
+      "Hamdorf Meeting Point",
+      "Windpark Hamdorf – Rendsburg-Eckernförde",
+      // client names
+      "Ostsee Terminal Services",
+      "Fördeparken Kiel GmbH",
+      "Kiel Port Logistics",
+      "Bahnhofsservice Kiel",
+      "Airport Services Kiel",
+      "Eiderland Windservice",
+    ];
+    for (const value of identities) {
+      expect(siteKey(value), value).toBeNull();
+      expect(termKey(value), value).toBeNull();
+      expect(localizeSite(value, t_en)).toBe(value);
+      expect(localizeSite(value, t_de)).toBe(value);
+      expect(localizeTerm(value, t_en)).toBe(value);
+    }
   });
 
   it("leaves unknown tenant-created locations exactly as stored", () => {

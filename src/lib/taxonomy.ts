@@ -24,6 +24,11 @@ export const TERM_KEYS: Record<string, string> = {
   Empfangskraft: "receptionist",
   "Vorarbeiter/in": "team_lead",
   "Hausmeister/in": "caretaker",
+  "Logistikmitarbeiter/in": "logistics_worker",
+  "Parkservice-Mitarbeiter/in": "parking_attendant",
+  "Terminalmitarbeiter/in": "terminal_staff",
+  "Servicetechniker/in": "service_technician",
+  "Wartungstechniker/in": "maintenance_technician",
 };
 
 /** Stable key for a canonical value, or null when the value is not taxonomy. */

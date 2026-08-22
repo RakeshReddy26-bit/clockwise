@@ -63,7 +63,12 @@
     "service_staff": "Servicekraft",
     "receptionist": "Empfangskraft",
     "team_lead": "Vorarbeiter/in",
-    "caretaker": "Hausmeister/in"
+    "caretaker": "Hausmeister/in",
+    "logistics_worker": "Logistikmitarbeiter/in",
+    "parking_attendant": "Parkservice-Mitarbeiter/in",
+    "terminal_staff": "Terminalmitarbeiter/in",
+    "service_technician": "Servicetechniker/in",
+    "maintenance_technician": "Wartungstechniker/in"
   },
   "sites": {
     "hq_berlin_mitte": "Zentrale Berlin-Mitte",

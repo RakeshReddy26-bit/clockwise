@@ -41,6 +41,7 @@ Targeted, idempotent, non-destructive — they never reseed or delete:
 - `npm run generalize:demo-data -- --dry` — preview the industry-neutral demo-data update.
 - `npm run generalize:demo-data` — apply it (departments, positions, shift roles/instructions, job posting, news).
 - `npm run add:gepack-demo` — add the GE-PACK Services client, worksite, job, shifts and assignments (insert-if-absent).
+- `npm run add:kiel-demo` — add the Kiel / Rendsburg-Eckernförde geography: 12 worksites (cruise terminals, ferry quays, station, parking, airport parking, two-zone wind farm), 6 client jobs, ~16 shifts and assignments (insert-if-absent).
 
 ## Localization of database values
 

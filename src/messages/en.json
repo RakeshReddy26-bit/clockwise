@@ -63,7 +63,12 @@
     "service_staff": "Service Staff",
     "receptionist": "Receptionist",
     "team_lead": "Team Lead",
-    "caretaker": "Caretaker"
+    "caretaker": "Caretaker",
+    "logistics_worker": "Logistics Worker",
+    "parking_attendant": "Parking Attendant",
+    "terminal_staff": "Terminal Staff",
+    "service_technician": "Service Technician",
+    "maintenance_technician": "Maintenance Technician"
   },
   "sites": {
     "hq_berlin_mitte": "Berlin-Mitte Headquarters",

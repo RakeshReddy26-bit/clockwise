@@ -13,7 +13,8 @@
     "backfill:coords": "tsx scripts/backfill-location-coords.ts",
     "rename:demo-company": "tsx scripts/rename-demo-company.ts",
     "generalize:demo-data": "tsx scripts/generalize-demo-data.ts",
-    "add:gepack-demo": "tsx scripts/add-gepack-demo.ts"
+    "add:gepack-demo": "tsx scripts/add-gepack-demo.ts",
+    "add:kiel-demo": "tsx scripts/add-kiel-demo.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
