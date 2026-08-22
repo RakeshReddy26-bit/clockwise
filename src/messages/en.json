@@ -137,6 +137,26 @@
     "noOpenShifts": "All shifts are staffed.",
     "allShifts": "View all shifts"
   },
+  "offers": {
+    "sectionTitle": "Open shift offers ({count})",
+    "when": "When",
+    "hours": "Duration",
+    "hoursValue": "{hours} h",
+    "role": "Role",
+    "qualification": "Qualification",
+    "state_pending": "Open",
+    "state_interested": "Interested",
+    "state_declined": "Declined",
+    "state_withdrawn": "Withdrawn",
+    "waitingForConfirmation": "Waiting for manager confirmation",
+    "actionInterested": "Interested",
+    "actionDecline": "Decline",
+    "actionWithdraw": "Withdraw interest",
+    "noticeClosed": "This offer is no longer open.",
+    "noticeDecided": "This offer has already been decided.",
+    "errorNotAllowed": "That change is not possible.",
+    "errorGeneric": "Your response could not be saved. Please try again."
+  },
   "planning": {
     "title": "Shift planning",
     "understaffedCount": "{count} shifts understaffed",

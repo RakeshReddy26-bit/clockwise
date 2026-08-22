@@ -2,11 +2,19 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { getShellContext } from "@/lib/shell-context";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { OfferList } from "@/components/offer-list";
 
 export default async function HomePage() {
   const ctx = await getShellContext();
   const t = await getTranslations("home");
   const tn = await getTranslations("employeeNav");
+
+  const { data: employee } = await ctx.supabase
+    .from("employees")
+    .select("id")
+    .eq("company_id", ctx.membership.company_id)
+    .eq("profile_id", ctx.userId)
+    .maybeSingle();
 
   const quickLinks = [
     { href: "/me/calendar", label: tn("calendar") },
@@ -22,6 +30,15 @@ export default async function HomePage() {
           <CardDescription>{t("foundationNote")}</CardDescription>
         </CardHeader>
       </Card>
+
+      {employee && (
+        <OfferList
+          supabase={ctx.supabase}
+          employeeId={employee.id}
+          companyId={ctx.membership.company_id}
+        />
+      )}
+
       <div className="grid grid-cols-3 gap-2">
         {quickLinks.map((l) => (
           <Link

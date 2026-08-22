@@ -137,6 +137,26 @@
     "noOpenShifts": "Alle Schichten sind besetzt.",
     "allShifts": "Alle Schichten ansehen"
   },
+  "offers": {
+    "sectionTitle": "Offene Schichtangebote ({count})",
+    "when": "Zeitraum",
+    "hours": "Dauer",
+    "hoursValue": "{hours} Std.",
+    "role": "Rolle",
+    "qualification": "Qualifikation",
+    "state_pending": "Offen",
+    "state_interested": "Interessiert",
+    "state_declined": "Abgelehnt",
+    "state_withdrawn": "Zurückgezogen",
+    "waitingForConfirmation": "Warten auf Bestätigung durch die Einsatzleitung",
+    "actionInterested": "Interessiert",
+    "actionDecline": "Ablehnen",
+    "actionWithdraw": "Interesse zurückziehen",
+    "noticeClosed": "Dieses Angebot ist nicht mehr offen.",
+    "noticeDecided": "Über dieses Angebot wurde bereits entschieden.",
+    "errorNotAllowed": "Diese Änderung ist nicht möglich.",
+    "errorGeneric": "Ihre Antwort konnte nicht gespeichert werden. Bitte erneut versuchen."
+  },
   "planning": {
     "title": "Schichtplanung",
     "understaffedCount": "{count} Schichten unterbesetzt",

@@ -537,3 +537,227 @@ describe("send-offer guarantees", () => {
     ).rejects.toThrow(/row-level security/);
   });
 });
+
+/**
+ * B3 employee responses at the database layer. The transition rules themselves
+ * are pure and unit-tested; what matters here is that the row an employee can
+ * reach is only ever their own, and that the columns a manager decision uses
+ * stay out of their hands.
+ */
+describe("employee response persistence", () => {
+  /**
+   * Puts the fixture offer back in play. The B2 block above leaves its own
+   * offer open on the same shift, and only one may be open at a time, so that
+   * one is closed first rather than assuming a particular starting state.
+   */
+  async function resetResponse() {
+    await db.query(
+      "update public.shift_offers set status = 'cancelled' where shift_id = $1 and status = 'open' and id <> $2",
+      [A_SHIFT, OFFERS.a]
+    );
+    await db.query("update public.shift_offers set status = 'open' where id = $1", [OFFERS.a]);
+    await db.query(
+      "update public.shift_offer_responses set response = 'pending', responded_at = null where id = $1",
+      [OFFER_RESPONSES.aSelf]
+    );
+  }
+
+  async function currentResponse(): Promise<string> {
+    const { rows } = await db.query(
+      "select response from public.shift_offer_responses where id = $1",
+      [OFFER_RESPONSES.aSelf]
+    );
+    return rows[0].response as string;
+  }
+
+  it("pending → interested is saved with a timestamp", async () => {
+    await resetResponse();
+    const count = await runAs(
+      USERS.aWorker,
+      async (q) =>
+        (await q(
+          "update shift_offer_responses set response = 'interested', responded_at = now() where id = $1",
+          [OFFER_RESPONSES.aSelf]
+        )).rowCount,
+      { commit: true }
+    );
+    expect(count).toBe(1);
+    expect(await currentResponse()).toBe("interested");
+  });
+
+  it("interested → withdrawn is saved", async () => {
+    const count = await runAs(
+      USERS.aWorker,
+      async (q) =>
+        (await q("update shift_offer_responses set response = 'withdrawn' where id = $1", [
+          OFFER_RESPONSES.aSelf,
+        ])).rowCount,
+      { commit: true }
+    );
+    expect(count).toBe(1);
+    expect(await currentResponse()).toBe("withdrawn");
+  });
+
+  it("pending → declined is saved", async () => {
+    await resetResponse();
+    const count = await runAs(
+      USERS.aWorker,
+      async (q) =>
+        (await q("update shift_offer_responses set response = 'declined' where id = $1", [
+          OFFER_RESPONSES.aSelf,
+        ])).rowCount,
+      { commit: true }
+    );
+    expect(count).toBe(1);
+    expect(await currentResponse()).toBe("declined");
+  });
+
+  it("writing the same state twice leaves one row and one value", async () => {
+    await resetResponse();
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await runAs(
+        USERS.aWorker,
+        (q) =>
+          q("update shift_offer_responses set response = 'interested' where id = $1", [
+            OFFER_RESPONSES.aSelf,
+          ]),
+        { commit: true }
+      );
+    }
+    const { rows } = await db.query(
+      "select count(*)::int as c from public.shift_offer_responses where offer_id = $1 and employee_id = $2",
+      [OFFERS.a, EMPLOYEES.aSelf]
+    );
+    expect(Number(rows[0].c)).toBe(1);
+    expect(await currentResponse()).toBe("interested");
+  });
+
+  it("an employee cannot answer a colleague's offer", async () => {
+    const count = await runAs(USERS.aWorker, async (q) =>
+      (await q("update shift_offer_responses set response = 'declined' where id = $1", [
+        OFFER_RESPONSES.aColleague,
+      ])).rowCount
+    );
+    expect(count).toBe(0);
+  });
+
+  it("an employee cannot answer an offer in another tenant", async () => {
+    const count = await runAs(USERS.bWorker, async (q) =>
+      (await q("update shift_offer_responses set response = 'interested' where id = $1", [
+        OFFER_RESPONSES.aSelf,
+      ])).rowCount
+    );
+    expect(count).toBe(0);
+  });
+
+  it("an employee cannot record a decision on themselves", async () => {
+    await expect(
+      runAs(USERS.aWorker, (q) =>
+        q(
+          `update shift_offer_responses
+           set response = 'interested', decided_by = $2, decided_at = now() where id = $1`,
+          [OFFER_RESPONSES.aSelf, USERS.aWorker]
+        )
+      )
+    ).rejects.toThrow(/row-level security/);
+  });
+
+  it("an employee cannot attach an assignment to their own response", async () => {
+    await expect(
+      runAs(USERS.aWorker, (q) =>
+        q(
+          `update shift_offer_responses
+           set response = 'interested', resulting_assignment_id = $2 where id = $1`,
+          [OFFER_RESPONSES.aSelf, "aaaa4444-0000-0000-0000-000000000001"]
+        )
+      )
+    ).rejects.toThrow(/row-level security/);
+  });
+
+  it("a decided response is frozen for the employee", async () => {
+    await db.query(
+      "update public.shift_offer_responses set decided_by = $2, decided_at = now() where id = $1",
+      [OFFER_RESPONSES.aSelf, USERS.aDispatcher]
+    );
+    const count = await runAs(USERS.aWorker, async (q) =>
+      (await q("update shift_offer_responses set response = 'declined' where id = $1", [
+        OFFER_RESPONSES.aSelf,
+      ])).rowCount
+    );
+    expect(count).toBe(0);
+    await db.query(
+      "update public.shift_offer_responses set decided_by = null, decided_at = null where id = $1",
+      [OFFER_RESPONSES.aSelf]
+    );
+  });
+
+  it("a closed offer hides itself from the employee, so no response can follow", async () => {
+    await db.query("update public.shift_offers set status = 'filled' where id = $1", [OFFERS.a]);
+    const visible = await runAs(USERS.aWorker, async (q) =>
+      (await q(
+        `select r.id from shift_offer_responses r
+         join shift_offers o on o.id = r.offer_id
+         where o.status = 'open'`
+      )).rows
+    );
+    expect(visible).toHaveLength(0);
+    await resetResponse();
+  });
+
+  it("every response row an employee can see belongs to them", async () => {
+    const rows = await runAs(USERS.aWorker, async (q) =>
+      (await q("select id, employee_id from shift_offer_responses")).rows
+    );
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((r) => r.employee_id === EMPLOYEES.aSelf)).toBe(true);
+  });
+
+  /**
+   * Employees cannot write notifications at all — notifications_insert_staff
+   * restricts inserts to staff. That is why respondToOffer fans out through
+   * the service-role client, the same way the geofence and attendance alerts
+   * already do, rather than under the employee's own RLS.
+   */
+  it("an employee cannot notify anyone directly, in their tenant or another", async () => {
+    for (const [companyId, profileId] of [
+      [COMPANY_A, USERS.aDispatcher],
+      [COMPANY_B, USERS.bAdmin],
+    ]) {
+      await expect(
+        runAs(USERS.aWorker, (q) =>
+          q(
+            `insert into notifications (company_id, profile_id, type)
+             values ($1, $2, 'shift_offer_response')`,
+            [companyId, profileId]
+          )
+        ),
+        companyId
+      ).rejects.toThrow(/row-level security/);
+    }
+  });
+
+  it("staff receive the response notification, scoped to their tenant", async () => {
+    await runAs(
+      USERS.aDispatcher,
+      (q) =>
+        q(
+          `insert into notifications (company_id, profile_id, type)
+           values ($1, $2, 'shift_offer_response')`,
+          [COMPANY_A, USERS.aDispatcher]
+        ),
+      { commit: true }
+    );
+
+    const dispatcherSees = await runAs(USERS.aDispatcher, async (q) =>
+      (await q("select count(*)::int as c from notifications where type = 'shift_offer_response'"))
+        .rows[0].c
+    );
+    expect(Number(dispatcherSees)).toBe(1);
+
+    const otherTenantSees = await runAs(USERS.bAdmin, async (q) =>
+      (await q("select count(*)::int as c from notifications where type = 'shift_offer_response'"))
+        .rows[0].c
+    );
+    expect(Number(otherTenantSees)).toBe(0);
+  });
+});
