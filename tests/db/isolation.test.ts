@@ -6,13 +6,9 @@
  * exactly how PostgREST/Supabase executes them.
  */
 import { beforeAll, afterAll, describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-import { Client } from "pg";
+import type { Client } from "pg";
+import { createTestDatabase, runAs as runAsUser, type QueryFn } from "./helpers";
 
-const ADMIN_URL =
-  process.env.TEST_DB_ADMIN_URL ??
-  "postgres://clockwise_owner:clockwise@localhost:5432/postgres";
 const DB_NAME = "clockwise_isolation_test";
 
 const USERS = {
@@ -27,46 +23,17 @@ const COMPANY_A = "11111111-0000-0000-0000-000000000000";
 
 let db: Client;
 
-function sqlFile(...rel: string[]) {
-  return readFileSync(join(__dirname, ...rel), "utf8");
-}
-
 /** Run fn inside a transaction executing as `userId` under RLS. */
 async function runAs<T>(
   userId: string,
-  fn: (q: (text: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[]; rowCount: number | null }>) => Promise<T>,
-  { commit = false }: { commit?: boolean } = {}
+  fn: (q: QueryFn) => Promise<T>,
+  options: { commit?: boolean } = {}
 ): Promise<T> {
-  await db.query("begin");
-  try {
-    await db.query("set local role authenticated");
-    await db.query("select set_config('request.jwt.claims', $1, true)", [
-      JSON.stringify({ sub: userId, role: "authenticated" }),
-    ]);
-    const result = await fn((text, params) => db.query(text, params as never));
-    await db.query(commit ? "commit" : "rollback");
-    return result;
-  } catch (e) {
-    await db.query("rollback");
-    throw e;
-  }
+  return runAsUser(db, userId, fn, options);
 }
 
 beforeAll(async () => {
-  const admin = new Client({ connectionString: ADMIN_URL });
-  await admin.connect();
-  await admin.query(`drop database if exists ${DB_NAME}`);
-  await admin.query(`create database ${DB_NAME}`);
-  await admin.end();
-
-  db = new Client({ connectionString: ADMIN_URL.replace(/\/postgres$/, `/${DB_NAME}`) });
-  await db.connect();
-  await db.query(sqlFile("00-supabase-shim.sql"));
-  await db.query(sqlFile("..", "..", "supabase", "migrations", "0001_schema.sql"));
-  await db.query(sqlFile("..", "..", "supabase", "migrations", "0002_rls.sql"));
-  await db.query(sqlFile("..", "..", "supabase", "migrations", "0003_auth_profile_trigger.sql"));
-  await db.query(sqlFile("..", "..", "supabase", "migrations", "0004_geofencing.sql"));
-  await db.query(sqlFile("01-test-fixtures.sql"));
+  db = await createTestDatabase(DB_NAME);
 }, 60_000);
 
 afterAll(async () => {

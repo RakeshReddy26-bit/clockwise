@@ -58,6 +58,23 @@ insert into public.shift_assignments (id, company_id, shift_id, employee_id, sta
   ('bbbb4444-0000-0000-0000-000000000001', '22222222-0000-0000-0000-000000000000',
    'bbbb3333-0000-0000-0000-000000000001', 'bbbb1111-0000-0000-0000-000000000001', 'assigned');
 
+-- Phase B1: an open offer on company A's shift, offered to worker A only.
+insert into public.shift_offers (id, company_id, shift_id, created_by, status) values
+  ('aaaa6666-0000-0000-0000-000000000001', '11111111-0000-0000-0000-000000000000',
+   'aaaa3333-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000002', 'open');
+insert into public.shift_offer_responses (id, company_id, offer_id, employee_id) values
+  ('aaaa7777-0000-0000-0000-000000000001', '11111111-0000-0000-0000-000000000000',
+   'aaaa6666-0000-0000-0000-000000000001', 'aaaa1111-0000-0000-0000-000000000001'),
+  ('aaaa7777-0000-0000-0000-000000000002', '11111111-0000-0000-0000-000000000000',
+   'aaaa6666-0000-0000-0000-000000000001', 'aaaa1111-0000-0000-0000-000000000002');
+
+insert into public.shift_offers (id, company_id, shift_id, status) values
+  ('bbbb6666-0000-0000-0000-000000000001', '22222222-0000-0000-0000-000000000000',
+   'bbbb3333-0000-0000-0000-000000000001', 'open');
+insert into public.shift_offer_responses (id, company_id, offer_id, employee_id) values
+  ('bbbb7777-0000-0000-0000-000000000001', '22222222-0000-0000-0000-000000000000',
+   'bbbb6666-0000-0000-0000-000000000001', 'bbbb1111-0000-0000-0000-000000000001');
+
 insert into public.notifications (company_id, profile_id, type) values
   ('11111111-0000-0000-0000-000000000000', 'aaaaaaaa-0000-0000-0000-000000000003', 'shift_assigned'),
   ('22222222-0000-0000-0000-000000000000', 'bbbbbbbb-0000-0000-0000-000000000003', 'shift_assigned');
