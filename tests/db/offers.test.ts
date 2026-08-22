@@ -333,3 +333,207 @@ describe("schema guarantees", () => {
     expect(rows[0].c).toBe(2);
   });
 });
+
+/**
+ * B2 send-offer guarantees, exercised at the layer the Server Action relies
+ * on. The action's own authorization chain is covered by the pure authz tests;
+ * what matters here is that the database makes a repeat send harmless and a
+ * cross-tenant send impossible even if application code were wrong.
+ */
+describe("send-offer guarantees", () => {
+  it("a manager creates an offer for a shift in their own tenant", async () => {
+    const offerId = await runAs(
+      USERS.aDispatcher,
+      async (q) => {
+        // start from a clean slate: close the fixture offer first
+        await q("update shift_offers set status = 'cancelled' where id = $1", [OFFERS.a]);
+        const { rows } = await q(
+          `insert into shift_offers (company_id, shift_id, created_by)
+           values ($1, $2, $3) returning id, status`,
+          [COMPANY_A, A_SHIFT, USERS.aDispatcher]
+        );
+        expect(rows[0].status).toBe("open");
+        return rows[0].id as string;
+      },
+      { commit: true }
+    );
+
+    const invited = await runAs(
+      USERS.aDispatcher,
+      async (q) =>
+        (await q(
+          `insert into shift_offer_responses (company_id, offer_id, employee_id)
+           values ($1, $2, $3) on conflict (offer_id, employee_id) do nothing
+           returning employee_id`,
+          [COMPANY_A, offerId, EMPLOYEES.aSelf]
+        )).rows,
+      { commit: true }
+    );
+    expect(invited.map((r) => r.employee_id)).toEqual([EMPLOYEES.aSelf]);
+  });
+
+  it("re-sending to the same employee invites nobody twice", async () => {
+    const offerId = await runAs(USERS.aDispatcher, async (q) =>
+      (await q("select id from shift_offers where shift_id = $1 and status = 'open'", [A_SHIFT]))
+        .rows[0].id as string
+    );
+
+    const repeat = await runAs(
+      USERS.aDispatcher,
+      async (q) =>
+        (await q(
+          `insert into shift_offer_responses (company_id, offer_id, employee_id)
+           values ($1, $2, $3) on conflict (offer_id, employee_id) do nothing
+           returning employee_id`,
+          [COMPANY_A, offerId, EMPLOYEES.aSelf]
+        )).rows,
+      { commit: true }
+    );
+    expect(repeat).toHaveLength(0); // nothing returned ⇒ nothing to notify
+
+    const total = await runAs(USERS.aDispatcher, async (q) =>
+      (await q("select count(*)::int as c from shift_offer_responses where offer_id = $1", [offerId]))
+        .rows[0].c
+    );
+    expect(total).toBe(1);
+  });
+
+  it("duplicate ids in one send collapse to a single response row", async () => {
+    const offerId = await runAs(USERS.aDispatcher, async (q) =>
+      (await q("select id from shift_offers where shift_id = $1 and status = 'open'", [A_SHIFT]))
+        .rows[0].id as string
+    );
+
+    const inserted = await runAs(
+      USERS.aDispatcher,
+      async (q) =>
+        (await q(
+          `insert into shift_offer_responses (company_id, offer_id, employee_id)
+           select $1, $2, unnest(array[$3::uuid, $3::uuid, $4::uuid])
+           on conflict (offer_id, employee_id) do nothing
+           returning employee_id`,
+          [COMPANY_A, offerId, EMPLOYEES.aColleague, EMPLOYEES.aColleague]
+        )).rows,
+      { commit: true }
+    );
+    expect(inserted).toHaveLength(1);
+    expect(inserted[0].employee_id).toBe(EMPLOYEES.aColleague);
+  });
+
+  it("only the selected employees receive a response row", async () => {
+    const rows = await runAs(USERS.aDispatcher, async (q) =>
+      (await q(
+        `select employee_id from shift_offer_responses r
+         join shift_offers o on o.id = r.offer_id
+         where o.shift_id = $1 and o.status = 'open'
+         order by employee_id`,
+        [A_SHIFT]
+      )).rows
+    );
+    expect(rows.map((r) => r.employee_id).sort()).toEqual(
+      [EMPLOYEES.aSelf, EMPLOYEES.aColleague].sort()
+    );
+    expect(rows.map((r) => r.employee_id)).not.toContain(EMPLOYEES.b);
+  });
+
+  it("an employee from another tenant cannot be given a response row", async () => {
+    const offerId = await runAs(USERS.aDispatcher, async (q) =>
+      (await q("select id from shift_offers where shift_id = $1 and status = 'open'", [A_SHIFT]))
+        .rows[0].id as string
+    );
+    // The company_id must match the offer's tenant for RLS to pass, and the
+    // employee then belongs to a different company — the write cannot succeed
+    // under either tenant's policy.
+    await expect(
+      runAs(USERS.aDispatcher, (q) =>
+        q(
+          `insert into shift_offer_responses (company_id, offer_id, employee_id)
+           values ($1, $2, $3)`,
+          [COMPANY_B, offerId, EMPLOYEES.b]
+        )
+      )
+    ).rejects.toThrow(/row-level security/);
+  });
+
+  it("a manager cannot offer a shift belonging to another tenant", async () => {
+    await expect(
+      runAs(USERS.aDispatcher, (q) =>
+        q("insert into shift_offers (company_id, shift_id, created_by) values ($1, $2, $3)", [
+          COMPANY_B,
+          "bbbb3333-0000-0000-0000-000000000001",
+          USERS.aDispatcher,
+        ])
+      )
+    ).rejects.toThrow(/row-level security/);
+  });
+
+  it("a second open offer for the same shift is refused, so re-sending must reuse it", async () => {
+    await expect(
+      runAs(USERS.aDispatcher, (q) =>
+        q("insert into shift_offers (company_id, shift_id) values ($1, $2)", [COMPANY_A, A_SHIFT])
+      )
+    ).rejects.toThrow(/shift_offers_one_open_per_shift|duplicate key/);
+  });
+
+  it("seat counting uses only assignments that still occupy the shift", async () => {
+    const counts = await runAs(USERS.aDispatcher, async (q) => {
+      await q("update shift_assignments set status = 'cancelled' where id = $1", [
+        "aaaa4444-0000-0000-0000-000000000001",
+      ]);
+      const occupying = (await q(
+        `select count(*)::int as c from shift_assignments
+         where shift_id = $1 and status in ('assigned','accepted','cancellation_requested')`,
+        [A_SHIFT]
+      )).rows[0].c;
+      const all = (await q("select count(*)::int as c from shift_assignments where shift_id = $1", [
+        A_SHIFT,
+      ])).rows[0].c;
+      return { occupying: Number(occupying), all: Number(all) };
+    });
+    // A cancelled assignment still exists as history but frees the seat.
+    expect(counts.all).toBeGreaterThan(counts.occupying);
+    expect(counts.occupying).toBe(0);
+  });
+
+  it("notifications for an offer stay inside the tenant and reach only the invited", async () => {
+    const offerId = await runAs(USERS.aDispatcher, async (q) =>
+      (await q("select id from shift_offers where shift_id = $1 and status = 'open'", [A_SHIFT]))
+        .rows[0].id as string
+    );
+
+    await runAs(
+      USERS.aDispatcher,
+      (q) =>
+        q(
+          `insert into notifications (company_id, profile_id, type, payload)
+           values ($1, $2, 'open_shift_available', jsonb_build_object('offer_id', $3::text))`,
+          [COMPANY_A, USERS.aWorker, offerId]
+        ),
+      { commit: true }
+    );
+
+    const recipientSees = await runAs(USERS.aWorker, async (q) =>
+      (await q("select count(*)::int as c from notifications where type = 'open_shift_available'"))
+        .rows[0].c
+    );
+    expect(recipientSees).toBe(1);
+
+    const otherTenantSees = await runAs(USERS.bWorker, async (q) =>
+      (await q("select count(*)::int as c from notifications where type = 'open_shift_available'"))
+        .rows[0].c
+    );
+    expect(otherTenantSees).toBe(0);
+  });
+
+  it("a manager cannot notify a profile in another tenant", async () => {
+    await expect(
+      runAs(USERS.aDispatcher, (q) =>
+        q(
+          `insert into notifications (company_id, profile_id, type)
+           values ($1, $2, 'open_shift_available')`,
+          [COMPANY_B, USERS.bWorker]
+        )
+      )
+    ).rejects.toThrow(/row-level security/);
+  });
+});
