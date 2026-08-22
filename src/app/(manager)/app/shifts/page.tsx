@@ -9,6 +9,23 @@ import { cn } from "@/lib/utils";
 import { loadCandidateInputsForShift, toShiftContext, type ShiftRow } from "@/lib/candidates";
 import { rankCandidates, OCCUPYING_ASSIGNMENT_STATUSES, type IneligibleReason } from "@/lib/eligibility";
 import { OfferPanel, type CandidateView } from "./offer-panel";
+import { ResponseActions } from "./response-actions";
+
+type ResponseRow = {
+  id: string;
+  response: string;
+  decided_at: string | null;
+  resulting_assignment_id: string | null;
+  employees: { full_name: string; employee_no: string } | null;
+};
+
+/** Interested first — those are the rows a manager can act on. */
+const RESPONSE_ORDER: Record<string, number> = {
+  interested: 0,
+  pending: 1,
+  withdrawn: 2,
+  declined: 3,
+};
 
 /**
  * Shift planning: upcoming shifts with a staffing gap, and — for the selected
@@ -95,6 +112,7 @@ export default async function ShiftPlanningPage({
 
   // Candidates only for the selected shift.
   let candidates: CandidateView[] = [];
+  let responses: ResponseRow[] = [];
   let remainingSeats = 0;
   if (selected) {
     remainingSeats = selected.required_count - (occupiedBy.get(selected.id) ?? 0);
@@ -106,11 +124,17 @@ export default async function ShiftPlanningPage({
     if (offerId) {
       const { data: invitedRows } = await ctx.supabase
         .from("shift_offer_responses")
-        .select("employee_id")
+        .select(
+          "id, employee_id, response, decided_at, resulting_assignment_id, employees(full_name, employee_no)"
+        )
         .eq("offer_id", offerId);
-      for (const row of (invitedRows ?? []) as Array<{ employee_id: string }>) {
-        invited.add(row.employee_id);
-      }
+      const rows = (invitedRows ?? []) as unknown as Array<
+        ResponseRow & { employee_id: string }
+      >;
+      for (const row of rows) invited.add(row.employee_id);
+      responses = [...rows].sort(
+        (a, b) => (RESPONSE_ORDER[a.response] ?? 9) - (RESPONSE_ORDER[b.response] ?? 9)
+      );
     }
 
     const byId = new Map(inputs.map((i) => [i.employeeId, i]));
@@ -237,7 +261,59 @@ export default async function ShiftPlanningPage({
               </span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-5">
+            {responses.length > 0 && (
+              <section className="flex flex-col gap-2">
+                <h3 className="text-sm font-semibold">{t("responses")}</h3>
+                <ul className="flex flex-col gap-1">
+                  {responses.map((row) => {
+                    const decided = row.decided_at !== null;
+                    const approved = decided && row.resulting_assignment_id !== null;
+                    return (
+                      <li
+                        key={row.id}
+                        className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-2 text-sm"
+                      >
+                        <span className="min-w-0">
+                          <span className="font-medium">{row.employees?.full_name ?? "—"}</span>{" "}
+                          <span className="text-xs text-muted-foreground tabular-nums">
+                            {row.employees?.employee_no ?? ""}
+                          </span>
+                        </span>
+
+                        <span className="flex items-center gap-2">
+                          {decided ? (
+                            <Badge variant={approved ? "success" : "secondary"}>
+                              {approved ? t("decisionApproved") : t("decisionNotSelected")}
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant={
+                                row.response === "interested"
+                                  ? "success"
+                                  : row.response === "declined"
+                                    ? "destructive"
+                                    : "secondary"
+                              }
+                            >
+                              {t(`response_${row.response}`)}
+                            </Badge>
+                          )}
+
+                          {!decided && row.response === "interested" && remainingSeats > 0 && (
+                            <ResponseActions responseId={row.id} />
+                          )}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+                {remainingSeats === 0 && (
+                  <p className="text-xs text-muted-foreground">{t("shiftFilled")}</p>
+                )}
+              </section>
+            )}
+
             <OfferPanel
               shiftId={selected.id}
               candidates={candidates}
