@@ -57,6 +57,24 @@ export async function OfferList({
     .limit(limit);
 
   const rows = (data ?? []) as unknown as ResponseRow[];
+
+  /**
+   * An offer whose shift cannot be read is a bug, not an empty state.
+   *
+   * This previously dropped such rows silently, which turned a missing RLS
+   * policy into a blank screen with nothing in the logs — the employee saw no
+   * offers and no error, and every automated gate stayed green. Migration 0008
+   * closed that particular gap; this stays as the tripwire for the next one.
+   */
+  const unreadable = rows.filter((row) => !row.shift_offers?.shifts);
+  if (unreadable.length > 0) {
+    console.error(
+      `OfferList: ${unreadable.length} offer(s) resolved a response row but not the shift behind it — ` +
+        `likely a missing SELECT policy on shifts/jobs for offered employees. ` +
+        `employee_id=${employeeId} response_ids=${unreadable.map((r) => r.id).join(",")}`
+    );
+  }
+
   const offers: OfferCardData[] = rows
     .filter((row) => row.shift_offers?.shifts)
     .map((row) => {
@@ -91,7 +109,7 @@ export async function OfferList({
       };
     });
 
-  if (offers.length === 0) return null;
+  if (offers.length === 0 && unreadable.length === 0) return null;
 
   return (
     <section className="flex flex-col gap-2">
@@ -101,6 +119,16 @@ export async function OfferList({
       {offers.map((offer) => (
         <OfferCard key={offer.responseId} offer={offer} />
       ))}
+
+      {/*
+        Tells the employee something is waiting for them and to ask dispatch,
+        without naming a table or a policy. Better than a blank screen.
+      */}
+      {unreadable.length > 0 && (
+        <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+          {t("offers.unavailable", { count: unreadable.length })}
+        </p>
+      )}
     </section>
   );
 }

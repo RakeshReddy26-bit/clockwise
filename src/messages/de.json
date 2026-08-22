@@ -155,7 +155,8 @@
     "noticeClosed": "Dieses Angebot ist nicht mehr offen.",
     "noticeDecided": "Über dieses Angebot wurde bereits entschieden.",
     "errorNotAllowed": "Diese Änderung ist nicht möglich.",
-    "errorGeneric": "Ihre Antwort konnte nicht gespeichert werden. Bitte erneut versuchen."
+    "errorGeneric": "Ihre Antwort konnte nicht gespeichert werden. Bitte erneut versuchen.",
+    "unavailable": "Für {count} Angebot(e) können die Details derzeit nicht angezeigt werden. Bitte wenden Sie sich an Ihre Einsatzleitung."
   },
   "planning": {
     "title": "Schichtplanung",

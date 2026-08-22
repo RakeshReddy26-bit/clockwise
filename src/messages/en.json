@@ -155,7 +155,8 @@
     "noticeClosed": "This offer is no longer open.",
     "noticeDecided": "This offer has already been decided.",
     "errorNotAllowed": "That change is not possible.",
-    "errorGeneric": "Your response could not be saved. Please try again."
+    "errorGeneric": "Your response could not be saved. Please try again.",
+    "unavailable": "Details for {count} offer(s) cannot be shown right now. Please contact your dispatcher."
   },
   "planning": {
     "title": "Shift planning",

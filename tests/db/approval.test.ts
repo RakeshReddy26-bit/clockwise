@@ -369,6 +369,17 @@ describe("rejection", () => {
  * until the first commits, then finds no vacancy.
  */
 describe("last-seat concurrency", () => {
+  /** Runs the approval and remembers which client it belonged to. */
+  function tagged(
+    client: Client,
+    responseId: string,
+    label: string
+  ): Promise<{ client: Client; label: string; result: ApprovalResult }> {
+    return client
+      .query("select public.approve_shift_offer($1) as result", [responseId])
+      .then((r) => ({ client, label, result: r.rows[0].result as ApprovalResult }));
+  }
+
   it("two managers approving different candidates produce exactly one assignment", async () => {
     const clientA = new Client({ connectionString: DB_URL });
     const clientB = new Client({ connectionString: DB_URL });
@@ -388,26 +399,29 @@ describe("last-seat concurrency", () => {
       }
 
       // Both statements are in flight before either transaction commits.
-      const raceA = clientA.query("select public.approve_shift_offer($1) as result", [
-        OFFER_RESPONSES.aSelf,
-      ]);
-      const raceB = clientB.query("select public.approve_shift_offer($1) as result", [
-        OFFER_RESPONSES.aColleague,
-      ]);
+      // Which one reaches the row lock first is genuinely non-deterministic —
+      // it shifts with query planning — so the test must not assume an order.
+      // Awaiting a fixed one first would deadlock whenever the other won.
+      const inFlight = [
+        { client: clientA, promise: tagged(clientA, OFFER_RESPONSES.aSelf, "A") },
+        { client: clientB, promise: tagged(clientB, OFFER_RESPONSES.aColleague, "B") },
+      ];
 
-      // A commits first; B is still blocked on the row lock until it does.
-      const resultA = (await raceA).rows[0].result as ApprovalResult;
-      await clientA.query("commit");
-      const resultB = (await raceB).rows[0].result as ApprovalResult;
-      await clientB.query("commit");
+      // The winner holds the lock; commit it, which releases the loser.
+      const first = await Promise.race(inFlight.map((entry) => entry.promise));
+      const winnerEntry = inFlight.find((entry) => entry.client === first.client)!;
+      const loserEntry = inFlight.find((entry) => entry.client !== first.client)!;
+      await winnerEntry.client.query("commit");
 
-      const statuses = [resultA.status, resultB.status].sort();
+      const second = await loserEntry.promise;
+      await loserEntry.client.query("commit");
+
+      const statuses = [first.result.status, second.result.status].sort();
       expect(statuses).toEqual(["approved", "no_vacancy"]);
-
-      const winner = resultA.status === "approved" ? resultA : resultB;
-      const loser = resultA.status === "approved" ? resultB : resultA;
-      expect(winner.assignment_id).toBeTruthy();
-      expect(loser.assignment_id).toBeUndefined();
+      expect(first.result.status).toBe("approved");
+      expect(first.result.assignment_id).toBeTruthy();
+      expect(second.result.status).toBe("no_vacancy");
+      expect(second.result.assignment_id).toBeUndefined();
     } finally {
       await clientA.end();
       await clientB.end();

@@ -24,6 +24,7 @@ import {
 const DB_NAME = "clockwise_offers_test";
 
 const A_SHIFT = "aaaa3333-0000-0000-0000-000000000001";
+const A_ASSIGNMENT = "aaaa4444-0000-0000-0000-000000000001";
 
 let db: Client;
 
@@ -535,6 +536,161 @@ describe("send-offer guarantees", () => {
         )
       )
     ).rejects.toThrow(/row-level security/);
+  });
+});
+
+/**
+ * B4.1 regression: the read path the employee UI actually performs.
+ *
+ * Every earlier offer test queried shift_offer_responses directly, so none of
+ * them noticed that an offered employee could not read the shift behind the
+ * offer — the offer list joins through to it, found nothing, and rendered a
+ * blank screen. These cases traverse response → offer → shift → job exactly as
+ * OfferList does, with the offered employee holding NO assignment on that
+ * shift, which is what hid the defect in the fixtures.
+ */
+describe("offer-derived shift visibility", () => {
+  /** The join OfferList performs; returns what the employee can actually see. */
+  async function readOfferChain(userId: string) {
+    return runAs(userId, async (q) => {
+      const rows = (
+        await q(
+          `select r.id as response_id, s.id as shift_id, j.id as job_id, j.client_name
+           from shift_offer_responses r
+           join shift_offers o on o.id = r.offer_id
+           join shifts s on s.id = o.shift_id
+           join jobs j on j.id = s.job_id
+           where o.status = 'open'`
+        )
+      ).rows;
+      return rows;
+    });
+  }
+
+  /** Removes the coincidental assignment that masked the bug. */
+  async function detachAssignments() {
+    await db.query("delete from public.shift_assignments where employee_id = $1", [
+      EMPLOYEES.aSelf,
+    ]);
+    await db.query(
+      "update public.shift_offers set status = 'cancelled' where shift_id = $1 and id <> $2",
+      [A_SHIFT, OFFERS.a]
+    );
+    await db.query("update public.shift_offers set status = 'open' where id = $1", [OFFERS.a]);
+  }
+
+  it("an offered employee with no assignment can read the shift and its job", async () => {
+    await detachAssignments();
+
+    // Precondition: the visibility must come from the offer, not an assignment.
+    const { rows: assignments } = await db.query(
+      "select count(*)::int as c from public.shift_assignments where employee_id = $1 and shift_id = $2",
+      [EMPLOYEES.aSelf, A_SHIFT]
+    );
+    expect(Number(assignments[0].c)).toBe(0);
+
+    const visible = await readOfferChain(USERS.aWorker);
+    expect(visible).toHaveLength(1);
+    expect(visible[0].shift_id).toBe(A_SHIFT);
+    expect(visible[0].job_id).toBeTruthy();
+    expect(visible[0].client_name).toBeTruthy();
+  });
+
+  it("an employee who was never offered the shift still cannot read it", async () => {
+    await detachAssignments();
+    // The colleague holds a response row on the same offer in the fixtures;
+    // remove it so this employee has no route at all.
+    await db.query("delete from public.shift_offer_responses where id = $1", [
+      OFFER_RESPONSES.aColleague,
+    ]);
+
+    const visible = await runAs(USERS.aWorker, async (q) =>
+      (await q("select id from shifts where id = $1", [A_SHIFT])).rows
+    );
+    expect(visible).toHaveLength(1); // the offered employee still sees it
+
+    // restore for later cases
+    await db.query(
+      "insert into public.shift_offer_responses (id, company_id, offer_id, employee_id) values ($1, $2, $3, $4)",
+      [OFFER_RESPONSES.aColleague, COMPANY_A, OFFERS.a, EMPLOYEES.aColleague]
+    );
+  });
+
+  it("visibility disappears when the offer closes", async () => {
+    await detachAssignments();
+    expect(await readOfferChain(USERS.aWorker)).toHaveLength(1);
+
+    for (const closed of ["filled", "cancelled", "expired"]) {
+      await db.query("update public.shift_offers set status = $2 where id = $1", [
+        OFFERS.a,
+        closed,
+      ]);
+      const stillVisible = await runAs(USERS.aWorker, async (q) =>
+        (await q("select id from shifts where id = $1", [A_SHIFT])).rows
+      );
+      expect(stillVisible, closed).toHaveLength(0);
+    }
+    await db.query("update public.shift_offers set status = 'open' where id = $1", [OFFERS.a]);
+  });
+
+  it("an employee of another tenant sees nothing through the offer path", async () => {
+    await detachAssignments();
+    const visible = await readOfferChain(USERS.bWorker);
+    expect(visible.filter((r) => r.shift_id === A_SHIFT)).toHaveLength(0);
+
+    const direct = await runAs(USERS.bWorker, async (q) =>
+      (await q("select id from shifts where id = $1", [A_SHIFT])).rows
+    );
+    expect(direct).toHaveLength(0);
+  });
+
+  it("assignment-based visibility still works, offer or no offer", async () => {
+    await detachAssignments();
+    await db.query("update public.shift_offers set status = 'cancelled' where id = $1", [OFFERS.a]);
+
+    // With every offer closed, the employee cannot see the shift …
+    expect(
+      await runAs(USERS.aWorker, async (q) =>
+        (await q("select id from shifts where id = $1", [A_SHIFT])).rows
+      )
+    ).toHaveLength(0);
+
+    // … until an assignment gives them the original 0002 route back.
+    await db.query(
+      `insert into public.shift_assignments (id, company_id, shift_id, employee_id, status)
+       values ($1, $2, $3, $4, 'assigned')`,
+      [A_ASSIGNMENT, COMPANY_A, A_SHIFT, EMPLOYEES.aSelf]
+    );
+    expect(
+      await runAs(USERS.aWorker, async (q) =>
+        (await q("select id from shifts where id = $1", [A_SHIFT])).rows
+      )
+    ).toHaveLength(1);
+
+    await db.query("update public.shift_offers set status = 'open' where id = $1", [OFFERS.a]);
+  });
+
+  it("the offer path grants reads only — no writes come with it", async () => {
+    await detachAssignments();
+    const updated = await runAs(USERS.aWorker, async (q) =>
+      (await q("update shifts set instructions = 'x' where id = $1", [A_SHIFT])).rowCount
+    );
+    expect(updated).toBe(0);
+
+    await expect(
+      runAs(USERS.aWorker, (q) =>
+        q("insert into shifts (company_id, job_id, date, start_time, end_time) select company_id, job_id, date, start_time, end_time from shifts where id = $1", [
+          A_SHIFT,
+        ])
+      )
+    ).rejects.toThrow(/row-level security/);
+
+    // put the fixture assignment back for the suites that expect it
+    await db.query(
+      `insert into public.shift_assignments (id, company_id, shift_id, employee_id, status)
+       values ($1, $2, $3, $4, 'assigned') on conflict (id) do nothing`,
+      [A_ASSIGNMENT, COMPANY_A, A_SHIFT, EMPLOYEES.aSelf]
+    );
   });
 });
 
