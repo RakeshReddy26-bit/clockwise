@@ -65,6 +65,21 @@
     "team_lead": "Vorarbeiter/in",
     "caretaker": "Hausmeister/in"
   },
+  "sites": {
+    "hq_berlin_mitte": "Zentrale Berlin-Mitte",
+    "office_campus_adlershof": "Bürocampus Adlershof",
+    "logistics_park_grossbeeren": "Logistikpark Großbeeren",
+    "shopping_center_spandau": "Einkaufszentrum Spandau",
+    "hospital_buch": "Klinikum Buch"
+  },
+  "roles": {
+    "SUPER_ADMIN": "Super-Administrator",
+    "COMPANY_ADMIN": "Unternehmensadministrator",
+    "HR_MANAGER": "Personalleitung",
+    "DISPATCHER": "Disposition",
+    "EMPLOYEE": "Mitarbeiter/in",
+    "APPLICANT": "Bewerber/in"
+  },
   "ops": {
     "title": "Leitstand",
     "liveHint": "aktualisiert sich automatisch",

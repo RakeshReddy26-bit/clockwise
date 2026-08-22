@@ -4,6 +4,7 @@ import { getShellContext, brandingStyle } from "@/lib/shell-context";
 import { isManagerRole } from "@/lib/permissions";
 import { ManagerNav, type NavItem } from "@/components/manager-nav";
 import { LanguageToggle } from "@/components/language-toggle";
+import { RoleLabel } from "@/components/localized-term";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/app/(auth)/login/actions";
@@ -58,7 +59,7 @@ export default async function ManagerLayout({
             <div className="min-w-0">
               <p className="truncate text-xs font-medium">{ctx.profileName}</p>
               <p className="truncate text-[10px] text-muted-foreground">
-                {ctx.membership.role}
+                <RoleLabel value={ctx.membership.role} />
               </p>
             </div>
           </div>

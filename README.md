@@ -44,12 +44,22 @@ Targeted, idempotent, non-destructive — they never reseed or delete:
 
 ## Localization of database values
 
-Static UI text comes from `src/messages/{de,en}.json`. Database-driven taxonomy
-(departments, shift roles, employee positions) is localized through stable term
-keys in `src/lib/taxonomy.ts` and rendered with `<Term value={...} />`. Values
-outside the map render exactly as stored, so company, client, site and person
-names, addresses and free text are never translated. Filters and business logic
-always use raw values or ids — never translated labels.
+Static UI text comes from `src/messages/{de,en}.json`. System-controlled values
+stored in the database are localized through stable keys in
+`src/lib/taxonomy.ts`, kept in three separate namespaces so one kind of value
+can never be resolved as another:
+
+| Namespace | Covers | Component |
+|---|---|---|
+| `terms.*` | departments, shift roles, employee positions | `<Term>` / `localizedTerm()` |
+| `sites.*` | the five known demo worksites only | `<SiteName>` / `localizedSite()` |
+| `roles.*` | membership role enums | `<RoleLabel>` |
+
+Anything outside these maps renders exactly as stored — company, client, site
+and person names, addresses, instructions and free text are never translated,
+and tenant-created locations keep their own wording. Database values and enums
+are never rewritten; filters and business logic always use raw values or ids,
+never translated labels.
 
 ## Tests
 

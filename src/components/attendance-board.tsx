@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatMinutes, type AttendanceStatus } from "@/lib/attendance";
 import { formatDistance } from "@/lib/geo";
-import { Term, localizedTerm } from "@/components/localized-term";
+import { Term, localizedTerm, SiteName, localizedSite } from "@/components/localized-term";
 
 export type BoardRow = {
   assignmentId: string;
@@ -126,7 +126,13 @@ export async function AttendanceBoard({
           label={t("filterSite")}
           paramKey="site"
           filters={filters}
-          options={[{ value: "all", label: t("filterAll") }, ...sites.map((s) => ({ value: s.id, label: s.name }))]}
+          options={[
+            { value: "all", label: t("filterAll") },
+            // value stays the database id — only the label is localized
+            ...(await Promise.all(
+              sites.map(async (s) => ({ value: s.id, label: await localizedSite(s.name) }))
+            )),
+          ]}
         />
         <FilterGroup
           label={t("filterDepartment")}
@@ -174,7 +180,9 @@ export async function AttendanceBoard({
             {rows.map((r) => (
               <tr key={r.assignmentId} className="border-b last:border-b-0">
                 <td className="px-3 py-2 font-medium">{r.employeeName}</td>
-                <td className="px-3 py-2">{r.siteName}</td>
+                <td className="px-3 py-2">
+                  <SiteName value={r.siteName} />
+                </td>
                 <td className="px-3 py-2 text-muted-foreground">
                   <Term value={r.role} />
                 </td>

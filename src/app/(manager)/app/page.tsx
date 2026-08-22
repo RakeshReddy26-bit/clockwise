@@ -4,7 +4,7 @@ import { getShellContext } from "@/lib/shell-context";
 import { KpiCard } from "@/components/kpi-card";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { AttendanceBoard, type BoardRow, type BoardFilters } from "@/components/attendance-board";
-import { Term } from "@/components/localized-term";
+import { Term, SiteName } from "@/components/localized-term";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -301,7 +301,12 @@ export default async function DashboardPage({
               <div key={s.id} className="flex items-center justify-between gap-2 text-sm">
                 <span>
                   <span className="font-medium">
-                    {s.jobs?.locations?.name ?? s.jobs?.client_name ?? "—"}
+                    {/* location names localize; a client-name fallback never does */}
+                    {s.jobs?.locations?.name ? (
+                      <SiteName value={s.jobs.locations.name} />
+                    ) : (
+                      (s.jobs?.client_name ?? "—")
+                    )}
                   </span>{" "}
                   <span className="text-muted-foreground tabular-nums">
                     {fmtTime(s.start_time)}–{fmtTime(s.end_time)}

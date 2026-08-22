@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatDistance } from "@/lib/geo";
+import { SiteName } from "@/components/localized-term";
 import { approveManualRequest, rejectManualRequest } from "./actions";
 
 type EntryRow = {
@@ -202,7 +203,11 @@ export default async function TimeBoardPage({
                 <tr key={e.id} className="border-b last:border-b-0">
                   <td className="px-3 py-2 font-medium">{e.employees?.full_name ?? "—"}</td>
                   <td className="px-3 py-2">
-                    {shift?.jobs?.locations?.name ?? shift?.jobs?.client_name ?? "—"}
+                    {shift?.jobs?.locations?.name ? (
+                      <SiteName value={shift.jobs.locations.name} />
+                    ) : (
+                      (shift?.jobs?.client_name ?? "—")
+                    )}
                   </td>
                   <td className="px-3 py-2 tabular-nums text-muted-foreground">
                     {shift ? `${fmtTime(shift.start_time)}–${fmtTime(shift.end_time)}` : "—"}

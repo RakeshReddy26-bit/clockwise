@@ -3,7 +3,7 @@ import { getShellContext } from "@/lib/shell-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Term } from "@/components/localized-term";
+import { Term, SiteName, localizedSite } from "@/components/localized-term";
 import { ClockInPanel } from "./clock-in-panel";
 
 type AssignmentRow = {
@@ -120,7 +120,13 @@ export default async function MyShiftsPage() {
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
               <div>
                 <dt className="text-xs text-muted-foreground">{t("site")}</dt>
-                <dd className="font-medium">{siteName ?? current.shifts?.jobs?.client_name ?? "—"}</dd>
+                <dd className="font-medium">
+                  {siteName ? (
+                    <SiteName value={siteName} />
+                  ) : (
+                    (current.shifts?.jobs?.client_name ?? "—")
+                  )}
+                </dd>
               </div>
               <div>
                 <dt className="text-xs text-muted-foreground">{t("role")}</dt>
@@ -151,7 +157,7 @@ export default async function MyShiftsPage() {
 
             <ClockInPanel
               assignmentId={current.id}
-              siteName={siteName}
+              siteName={await localizedSite(siteName)}
               site={site}
               runningEntryId={runningEntry?.id ?? null}
               hasPendingRequest={hasPendingRequest}

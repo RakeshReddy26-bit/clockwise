@@ -65,6 +65,21 @@
     "team_lead": "Team Lead",
     "caretaker": "Caretaker"
   },
+  "sites": {
+    "hq_berlin_mitte": "Berlin-Mitte Headquarters",
+    "office_campus_adlershof": "Adlershof Office Campus",
+    "logistics_park_grossbeeren": "Großbeeren Logistics Park",
+    "shopping_center_spandau": "Spandau Shopping Center",
+    "hospital_buch": "Buch Hospital"
+  },
+  "roles": {
+    "SUPER_ADMIN": "Super Admin",
+    "COMPANY_ADMIN": "Company Admin",
+    "HR_MANAGER": "HR Manager",
+    "DISPATCHER": "Dispatcher",
+    "EMPLOYEE": "Employee",
+    "APPLICANT": "Applicant"
+  },
   "ops": {
     "title": "Operations",
     "liveHint": "updates live",

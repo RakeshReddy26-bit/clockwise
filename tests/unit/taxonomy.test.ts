@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { termKey, localizeTerm, TERM_KEYS } from "@/lib/taxonomy";
+import {
+  termKey,
+  localizeTerm,
+  TERM_KEYS,
+  siteKey,
+  localizeSite,
+  SITE_KEYS,
+  roleKey,
+  localizeRole,
+  ROLE_KEYS,
+} from "@/lib/taxonomy";
 import de from "@/messages/de.json";
 import en from "@/messages/en.json";
 
@@ -96,20 +106,188 @@ describe("localizeTerm", () => {
   });
 });
 
-describe("catalog completeness", () => {
-  const keys = [...new Set(Object.values(TERM_KEYS))];
+describe("demo worksite localization", () => {
+  const SITES: Array<[string, string]> = [
+    ["Zentrale Berlin-Mitte", "Berlin-Mitte Headquarters"],
+    ["Bürocampus Adlershof", "Adlershof Office Campus"],
+    ["Logistikpark Großbeeren", "Großbeeren Logistics Park"],
+    ["Einkaufszentrum Spandau", "Spandau Shopping Center"],
+    ["Klinikum Buch", "Buch Hospital"],
+  ];
 
-  it("every term key exists in both catalogs", () => {
-    const deTerms = (de as { terms: Record<string, string> }).terms;
-    const enTerms = (en as { terms: Record<string, string> }).terms;
-    for (const key of keys) {
-      expect(deTerms[key], `de.terms.${key}`).toBeTruthy();
-      expect(enTerms[key], `en.terms.${key}`).toBeTruthy();
+  it("renders all five demo sites in English", () => {
+    for (const [de_name, en_name] of SITES) {
+      expect(localizeSite(de_name, t_en)).toBe(en_name);
     }
   });
 
-  it("catalogs contain no keys the taxonomy does not use", () => {
-    const enTerms = (en as { terms: Record<string, string> }).terms;
-    expect(Object.keys(enTerms).sort()).toEqual([...keys].sort());
+  it("renders all five demo sites in German", () => {
+    for (const [de_name] of SITES) {
+      expect(localizeSite(de_name, t_de)).toBe(de_name);
+    }
+  });
+
+  it("keeps GE-PACK Services – Werk Nord identical in both languages", () => {
+    const site = "GE-PACK Services – Werk Nord";
+    expect(siteKey(site)).toBeNull();
+    expect(localizeSite(site, t_en)).toBe(site);
+    expect(localizeSite(site, t_de)).toBe(site);
+    // and the bare client name too
+    expect(localizeSite("GE-PACK Services", t_en)).toBe("GE-PACK Services");
+  });
+
+  it("leaves unknown tenant-created locations exactly as stored", () => {
+    for (const custom of [
+      "Werkstatt Süd",
+      "Client HQ Tower 3",
+      "Lager 7 / Rampe B",
+      "Hotel Adlon Kempinski",
+    ]) {
+      expect(siteKey(custom)).toBeNull();
+      expect(localizeSite(custom, t_en)).toBe(custom);
+      expect(localizeSite(custom, t_de)).toBe(custom);
+    }
+  });
+
+  it("falls back safely on empty input and a throwing translator", () => {
+    expect(localizeSite(null, t_en)).toBe("");
+    expect(localizeSite("Klinikum Buch", () => {
+      throw new Error("no catalog");
+    })).toBe("Klinikum Buch");
+  });
+});
+
+describe("namespace isolation", () => {
+  it("a site name is never resolved as a term", () => {
+    for (const site of Object.keys(SITE_KEYS)) {
+      expect(termKey(site)).toBeNull();
+      expect(localizeTerm(site, t_en)).toBe(site);
+    }
+  });
+
+  it("a department or role is never resolved as a site", () => {
+    for (const term of Object.keys(TERM_KEYS)) {
+      expect(siteKey(term)).toBeNull();
+      expect(localizeSite(term, t_en)).toBe(term);
+    }
+  });
+
+  it("role enums are not taxonomy or sites", () => {
+    for (const role of ROLE_KEYS) {
+      expect(termKey(role)).toBeNull();
+      expect(siteKey(role)).toBeNull();
+    }
+  });
+
+  it("the two maps share no source values", () => {
+    const overlap = Object.keys(TERM_KEYS).filter((k) => k in SITE_KEYS);
+    expect(overlap).toEqual([]);
+  });
+});
+
+describe("system role localization", () => {
+  it("renders English role labels", () => {
+    expect(localizeRole("COMPANY_ADMIN", t_en)).toBe("Company Admin");
+    expect(localizeRole("HR_MANAGER", t_en)).toBe("HR Manager");
+    expect(localizeRole("DISPATCHER", t_en)).toBe("Dispatcher");
+    expect(localizeRole("EMPLOYEE", t_en)).toBe("Employee");
+    expect(localizeRole("APPLICANT", t_en)).toBe("Applicant");
+    expect(localizeRole("SUPER_ADMIN", t_en)).toBe("Super Admin");
+  });
+
+  it("renders German role labels", () => {
+    expect(localizeRole("COMPANY_ADMIN", t_de)).toBe("Unternehmensadministrator");
+    expect(localizeRole("HR_MANAGER", t_de)).toBe("Personalleitung");
+    expect(localizeRole("DISPATCHER", t_de)).toBe("Disposition");
+    expect(localizeRole("EMPLOYEE", t_de)).toBe("Mitarbeiter/in");
+    expect(localizeRole("APPLICANT", t_de)).toBe("Bewerber/in");
+    expect(localizeRole("SUPER_ADMIN", t_de)).toBe("Super-Administrator");
+  });
+
+  it("passes through anything that is not a known enum value", () => {
+    expect(localizeRole("REGIONAL_LEAD", t_en)).toBe("REGIONAL_LEAD");
+    expect(roleKey("company_admin")).toBeNull(); // case-sensitive: enums are exact
+    expect(localizeRole(null, t_en)).toBe("");
+  });
+});
+
+describe("localization never touches data used for logic", () => {
+  it("enum values are unchanged by localization — only labels differ", () => {
+    for (const role of ROLE_KEYS) {
+      const label = localizeRole(role, t_en);
+      expect(roleKey(role)).toBe(role); // the raw enum survives round-trip
+      expect(label).not.toBe(""); // and a label exists
+    }
+  });
+
+  it("filter options localize the label but keep the database id as the value", async () => {
+    const departments = [
+      { id: "11111111-1111-1111-1111-111111111111", name: "Reinigung" },
+      { id: "22222222-2222-2222-2222-222222222222", name: "Sonderdienst" },
+    ];
+    const options = departments.map((d) => ({
+      value: d.id,
+      label: localizeTerm(d.name, t_en),
+    }));
+    expect(options[0]).toEqual({
+      value: "11111111-1111-1111-1111-111111111111",
+      label: "Cleaning",
+    });
+    // unknown department: label falls back, id untouched
+    expect(options[1]).toEqual({
+      value: "22222222-2222-2222-2222-222222222222",
+      label: "Sonderdienst",
+    });
+  });
+
+  it("site filter options keep raw ids regardless of language", () => {
+    const sites = [{ id: "abc-123", name: "Klinikum Buch" }];
+    const de_options = sites.map((s) => ({ value: s.id, label: localizeSite(s.name, t_de) }));
+    const en_options = sites.map((s) => ({ value: s.id, label: localizeSite(s.name, t_en) }));
+    expect(de_options[0].value).toBe(en_options[0].value);
+    expect(de_options[0].label).toBe("Klinikum Buch");
+    expect(en_options[0].label).toBe("Buch Hospital");
+  });
+
+  it("localization is a pure display transform — inputs are never mutated", () => {
+    const row = { name: "Klinikum Buch", id: "abc-123" };
+    const snapshot = JSON.stringify(row);
+    localizeSite(row.name, t_en);
+    localizeTerm(row.name, t_en);
+    localizeRole(row.name, t_en);
+    expect(JSON.stringify(row)).toBe(snapshot);
+  });
+});
+
+describe("catalog completeness", () => {
+  const ns = (m: unknown, name: string) =>
+    (m as Record<string, Record<string, string>>)[name];
+
+  it.each([
+    ["terms", [...new Set(Object.values(TERM_KEYS))]],
+    ["sites", [...new Set(Object.values(SITE_KEYS))]],
+    ["roles", [...ROLE_KEYS]],
+  ] as Array<[string, string[]]>)("%s: every key exists in both catalogs", (name, keys) => {
+    for (const key of keys) {
+      expect(ns(de, name)[key], `de.${name}.${key}`).toBeTruthy();
+      expect(ns(en, name)[key], `en.${name}.${key}`).toBeTruthy();
+    }
+  });
+
+  it.each([
+    ["terms", [...new Set(Object.values(TERM_KEYS))]],
+    ["sites", [...new Set(Object.values(SITE_KEYS))]],
+    ["roles", [...ROLE_KEYS]],
+  ] as Array<[string, string[]]>)("%s: catalogs contain no unused keys", (name, keys) => {
+    expect(Object.keys(ns(en, name)).sort()).toEqual([...keys].sort());
+    expect(Object.keys(ns(de, name)).sort()).toEqual([...keys].sort());
+  });
+
+  it("German and English catalogs differ where they should", () => {
+    const enSites = ns(en, "sites");
+    const deSites = ns(de, "sites");
+    for (const key of Object.keys(enSites)) {
+      expect(enSites[key]).not.toBe(deSites[key]);
+    }
   });
 });
