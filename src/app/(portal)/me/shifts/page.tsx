@@ -3,6 +3,7 @@ import { getShellContext } from "@/lib/shell-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Term } from "@/components/localized-term";
 import { ClockInPanel } from "./clock-in-panel";
 
 type AssignmentRow = {
@@ -123,7 +124,9 @@ export default async function MyShiftsPage() {
               </div>
               <div>
                 <dt className="text-xs text-muted-foreground">{t("role")}</dt>
-                <dd className="font-medium">{current.shifts?.required_role ?? "—"}</dd>
+                <dd className="font-medium">
+                  <Term value={current.shifts?.required_role} />
+                </dd>
               </div>
               <div>
                 <dt className="text-xs text-muted-foreground">{t("time")}</dt>

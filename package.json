@@ -12,7 +12,8 @@
     "seed": "tsx scripts/seed.ts",
     "backfill:coords": "tsx scripts/backfill-location-coords.ts",
     "rename:demo-company": "tsx scripts/rename-demo-company.ts",
-    "generalize:demo-data": "tsx scripts/generalize-demo-data.ts"
+    "generalize:demo-data": "tsx scripts/generalize-demo-data.ts",
+    "add:gepack-demo": "tsx scripts/add-gepack-demo.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",

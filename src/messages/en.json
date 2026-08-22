@@ -53,6 +53,18 @@
     "welcome": "Hello, {name}",
     "foundationNote": "Foundation is in place. Your shifts and time tracking arrive in the next phases."
   },
+  "terms": {
+    "building_services": "Building Services",
+    "cleaning": "Cleaning",
+    "logistics_events": "Logistics & Events",
+    "cleaner": "Cleaner",
+    "building_technician": "Building Technician",
+    "warehouse_assistant": "Warehouse Assistant",
+    "service_staff": "Service Staff",
+    "receptionist": "Receptionist",
+    "team_lead": "Team Lead",
+    "caretaker": "Caretaker"
+  },
   "ops": {
     "title": "Operations",
     "liveHint": "updates live",

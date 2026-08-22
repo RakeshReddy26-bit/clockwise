@@ -4,6 +4,7 @@ import { getShellContext } from "@/lib/shell-context";
 import { KpiCard } from "@/components/kpi-card";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { AttendanceBoard, type BoardRow, type BoardFilters } from "@/components/attendance-board";
+import { Term } from "@/components/localized-term";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -306,7 +307,9 @@ export default async function DashboardPage({
                     {fmtTime(s.start_time)}–{fmtTime(s.end_time)}
                   </span>
                 </span>
-                <span className="text-xs text-muted-foreground">{s.required_role ?? "—"}</span>
+                <span className="text-xs text-muted-foreground">
+                  <Term value={s.required_role} />
+                </span>
               </div>
             ))}
             <Link href="/app/shifts" className="mt-1 text-xs font-medium text-primary hover:underline">

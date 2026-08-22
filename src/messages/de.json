@@ -53,6 +53,18 @@
     "welcome": "Hallo, {name}",
     "foundationNote": "Grundgerüst eingerichtet. Ihre Schichten und die Zeiterfassung folgen in den nächsten Phasen."
   },
+  "terms": {
+    "building_services": "Gebäudetechnik",
+    "cleaning": "Reinigung",
+    "logistics_events": "Logistik & Event",
+    "cleaner": "Reinigungskraft",
+    "building_technician": "Haustechniker/in",
+    "warehouse_assistant": "Lagerhelfer/in",
+    "service_staff": "Servicekraft",
+    "receptionist": "Empfangskraft",
+    "team_lead": "Vorarbeiter/in",
+    "caretaker": "Hausmeister/in"
+  },
   "ops": {
     "title": "Leitstand",
     "liveHint": "aktualisiert sich automatisch",

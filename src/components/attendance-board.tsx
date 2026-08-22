@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatMinutes, type AttendanceStatus } from "@/lib/attendance";
 import { formatDistance } from "@/lib/geo";
+import { Term, localizedTerm } from "@/components/localized-term";
 
 export type BoardRow = {
   assignmentId: string;
@@ -133,7 +134,10 @@ export async function AttendanceBoard({
           filters={filters}
           options={[
             { value: "all", label: t("filterAll") },
-            ...departments.map((d) => ({ value: d.id, label: d.name })),
+            // value stays the database id — only the label is localized
+            ...(await Promise.all(
+              departments.map(async (d) => ({ value: d.id, label: await localizedTerm(d.name) }))
+            )),
           ]}
         />
         <FilterGroup label={t("filterStatus")} paramKey="status" filters={filters} options={statusOptions} />
@@ -171,7 +175,9 @@ export async function AttendanceBoard({
               <tr key={r.assignmentId} className="border-b last:border-b-0">
                 <td className="px-3 py-2 font-medium">{r.employeeName}</td>
                 <td className="px-3 py-2">{r.siteName}</td>
-                <td className="px-3 py-2 text-muted-foreground">{r.role ?? "—"}</td>
+                <td className="px-3 py-2 text-muted-foreground">
+                  <Term value={r.role} />
+                </td>
                 <td className="px-3 py-2 tabular-nums text-muted-foreground">
                   {time(r.scheduledStart)}–{time(r.scheduledEnd)}
                 </td>

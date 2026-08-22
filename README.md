@@ -40,6 +40,16 @@ Targeted, idempotent, non-destructive — they never reseed or delete:
 - `npm run rename:demo-company` — one-time rename of the demo company row (`companies.name` only).
 - `npm run generalize:demo-data -- --dry` — preview the industry-neutral demo-data update.
 - `npm run generalize:demo-data` — apply it (departments, positions, shift roles/instructions, job posting, news).
+- `npm run add:gepack-demo` — add the GE-PACK Services client, worksite, job, shifts and assignments (insert-if-absent).
+
+## Localization of database values
+
+Static UI text comes from `src/messages/{de,en}.json`. Database-driven taxonomy
+(departments, shift roles, employee positions) is localized through stable term
+keys in `src/lib/taxonomy.ts` and rendered with `<Term value={...} />`. Values
+outside the map render exactly as stored, so company, client, site and person
+names, addresses and free text are never translated. Filters and business logic
+always use raw values or ids — never translated labels.
 
 ## Tests
 
