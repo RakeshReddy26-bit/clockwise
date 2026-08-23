@@ -301,7 +301,10 @@ export default async function ShiftPlanningPage({
                           )}
 
                           {!decided && row.response === "interested" && remainingSeats > 0 && (
-                            <ResponseActions responseId={row.id} />
+                            <ResponseActions
+                              responseId={row.id}
+                              employeeName={row.employees?.full_name ?? ""}
+                            />
                           )}
                         </span>
                       </li>

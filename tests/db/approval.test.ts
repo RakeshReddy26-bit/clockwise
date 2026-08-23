@@ -364,6 +364,142 @@ describe("rejection", () => {
 });
 
 /**
+ * What each side can see once a decision has been made.
+ *
+ * The live UX defect this covers: on approval the offer closes, RLS stops
+ * exposing it, and the employee's offer card vanished with no explanation.
+ * The response row and the resulting assignment both stay readable, which is
+ * what the outcome panel and My shifts are built on.
+ */
+describe("post-decision visibility", () => {
+  it("an approved employee loses the offer but gains the assigned shift", async () => {
+    await approveAs(USERS.aDispatcher, OFFER_RESPONSES.aSelf);
+
+    const seen = await runAs(USERS.aWorker, async (q) => ({
+      openOffers: (await q("select count(*)::int as c from shift_offers where status = 'open'"))
+        .rows[0].c,
+      assignments: (
+        await q("select count(*)::int as c from shift_assignments where employee_id = $1", [
+          EMPLOYEES.aSelf,
+        ])
+      ).rows[0].c,
+      shifts: (await q("select count(*)::int as c from shifts where id = $1", [A_SHIFT])).rows[0].c,
+    }));
+
+    expect(Number(seen.openOffers)).toBe(0); // the card is gone …
+    expect(Number(seen.assignments)).toBe(1); // … because this now exists
+    expect(Number(seen.shifts)).toBe(1); // and the shift is readable via it
+  });
+
+  it("the employee can still read the decision on their own response row", async () => {
+    const result = await approveAs(USERS.aDispatcher, OFFER_RESPONSES.aSelf);
+
+    const rows = await runAs(USERS.aWorker, async (q) =>
+      (await q(
+        "select id, decided_at, resulting_assignment_id from shift_offer_responses where id = $1",
+        [OFFER_RESPONSES.aSelf]
+      )).rows
+    );
+    // This is what the outcome panel reads — no policy change needed.
+    expect(rows).toHaveLength(1);
+    expect(rows[0].decided_at).not.toBeNull();
+    expect(rows[0].resulting_assignment_id).toBe(result.assignment_id);
+  });
+
+  it("the approved employee can reach the shift behind their new assignment", async () => {
+    const result = await approveAs(USERS.aDispatcher, OFFER_RESPONSES.aSelf);
+
+    const rows = await runAs(USERS.aWorker, async (q) =>
+      (await q(
+        `select s.id, s.start_time, j.client_name
+         from shift_offer_responses r
+         join shift_assignments sa on sa.id = r.resulting_assignment_id
+         join shifts s on s.id = sa.shift_id
+         join jobs j on j.id = s.job_id
+         where r.id = $1`,
+        [OFFER_RESPONSES.aSelf]
+      )).rows
+    );
+    expect(result.status).toBe("approved");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].client_name).toBeTruthy();
+  });
+
+  it("a rejected employee sees a decision with no assignment", async () => {
+    await runAs(
+      USERS.aDispatcher,
+      (q) =>
+        q(
+          `update shift_offer_responses set decided_by = $2, decided_at = now()
+           where id = $1 and decided_at is null`,
+          [OFFER_RESPONSES.aSelf, USERS.aDispatcher]
+        ),
+      { commit: true }
+    );
+
+    const rows = await runAs(USERS.aWorker, async (q) =>
+      (await q(
+        "select decided_at, resulting_assignment_id from shift_offer_responses where id = $1",
+        [OFFER_RESPONSES.aSelf]
+      )).rows
+    );
+    expect(rows[0].decided_at).not.toBeNull();
+    expect(rows[0].resulting_assignment_id).toBeNull();
+  });
+
+  it("a closed offer is invisible while the response stays readable", async () => {
+    // Precisely the shape that made respondToOffer report a false failure:
+    // the response resolves, the embedded offer does not.
+    await approveAs(USERS.aDispatcher, OFFER_RESPONSES.aSelf);
+
+    const seen = await runAs(USERS.aWorker, async (q) => ({
+      response: (
+        await q("select count(*)::int as c from shift_offer_responses where id = $1", [
+          OFFER_RESPONSES.aSelf,
+        ])
+      ).rows[0].c,
+      offer: (
+        await q("select count(*)::int as c from shift_offers where id = $1", [OFFERS.a])
+      ).rows[0].c,
+    }));
+    expect(Number(seen.response)).toBe(1);
+    expect(Number(seen.offer)).toBe(0);
+  });
+
+  it("staffing reflects the assignment immediately after approval", async () => {
+    await approveAs(USERS.aDispatcher, OFFER_RESPONSES.aSelf);
+
+    const board = await runAs(USERS.aDispatcher, async (q) => ({
+      occupied: (
+        await q(
+          `select count(*)::int as c from shift_assignments
+           where shift_id = $1 and status in ('assigned','accepted','cancellation_requested')`,
+          [A_SHIFT]
+        )
+      ).rows[0].c,
+      required: (await q("select required_count from shifts where id = $1", [A_SHIFT])).rows[0]
+        .required_count,
+      status: (await q("select status from shifts where id = $1", [A_SHIFT])).rows[0].status,
+    }));
+    expect(Number(board.occupied)).toBe(Number(board.required));
+    expect(board.status).toBe("staffed");
+  });
+
+  it("a repeated approval leaves the visible state unchanged", async () => {
+    await approveAs(USERS.aDispatcher, OFFER_RESPONSES.aSelf);
+    const repeat = await approveAs(USERS.aDispatcher, OFFER_RESPONSES.aSelf);
+    expect(repeat.status).toBe("already_decided");
+
+    const assignments = await runAs(USERS.aWorker, async (q) =>
+      (await q("select count(*)::int as c from shift_assignments where employee_id = $1", [
+        EMPLOYEES.aSelf,
+      ])).rows[0].c
+    );
+    expect(Number(assignments)).toBe(1);
+  });
+});
+
+/**
  * Genuine concurrency: two separate connections, both inside open
  * transactions, racing for one seat. The second blocks on the shift row lock
  * until the first commits, then finds no vacancy.

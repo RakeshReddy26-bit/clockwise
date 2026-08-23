@@ -156,7 +156,11 @@
     "noticeDecided": "This offer has already been decided.",
     "errorNotAllowed": "That change is not possible.",
     "errorGeneric": "Your response could not be saved. Please try again.",
-    "unavailable": "Details for {count} offer(s) cannot be shown right now. Please contact your dispatcher."
+    "unavailable": "Details for {count} offer(s) cannot be shown right now. Please contact your dispatcher.",
+    "approvedTitle": "Your shift request was approved — you are assigned.",
+    "approvedWhereToFind": "You'll find it under My shifts.",
+    "notSelectedTitle": "Not selected this time",
+    "notSelectedBody": "{count} of your shift requests were not approved. The shift has been filled."
   },
   "planning": {
     "title": "Shift planning",
@@ -222,7 +226,10 @@
     "refused_missing_qualification": "The required qualification is missing or expired.",
     "refused_marked_unavailable": "This employee is marked unavailable.",
     "refused_on_vacation": "This employee is on approved vacation.",
-    "refused_on_sick_leave": "This employee has reported sick."
+    "refused_on_sick_leave": "This employee has reported sick.",
+    "approvedSuccess": "{name} assigned successfully.",
+    "approvedAndFilled": "{name} assigned. This shift is now fully staffed.",
+    "rejectedSuccess": "{name} was not selected."
   },
   "myShifts": {
     "title": "My shifts",

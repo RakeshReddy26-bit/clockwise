@@ -156,7 +156,11 @@
     "noticeDecided": "Über dieses Angebot wurde bereits entschieden.",
     "errorNotAllowed": "Diese Änderung ist nicht möglich.",
     "errorGeneric": "Ihre Antwort konnte nicht gespeichert werden. Bitte erneut versuchen.",
-    "unavailable": "Für {count} Angebot(e) können die Details derzeit nicht angezeigt werden. Bitte wenden Sie sich an Ihre Einsatzleitung."
+    "unavailable": "Für {count} Angebot(e) können die Details derzeit nicht angezeigt werden. Bitte wenden Sie sich an Ihre Einsatzleitung.",
+    "approvedTitle": "Ihre Schichtanfrage wurde zugesagt — Sie sind eingeteilt.",
+    "approvedWhereToFind": "Sie finden die Schicht unter „Meine Schichten“.",
+    "notSelectedTitle": "Diesmal nicht ausgewählt",
+    "notSelectedBody": "{count} Ihrer Schichtanfragen wurden nicht zugesagt. Die Schicht ist besetzt."
   },
   "planning": {
     "title": "Schichtplanung",
@@ -222,7 +226,10 @@
     "refused_missing_qualification": "Die erforderliche Qualifikation fehlt oder ist abgelaufen.",
     "refused_marked_unavailable": "Diese Person ist als nicht verfügbar eingetragen.",
     "refused_on_vacation": "Diese Person hat genehmigten Urlaub.",
-    "refused_on_sick_leave": "Diese Person ist krankgemeldet."
+    "refused_on_sick_leave": "Diese Person ist krankgemeldet.",
+    "approvedSuccess": "{name} wurde eingeteilt.",
+    "approvedAndFilled": "{name} wurde eingeteilt. Diese Schicht ist jetzt vollständig besetzt.",
+    "rejectedSuccess": "{name} wurde nicht ausgewählt."
   },
   "myShifts": {
     "title": "Meine Schichten",

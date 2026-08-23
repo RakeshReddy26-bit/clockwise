@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { getShellContext } from "@/lib/shell-context";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { OfferList } from "@/components/offer-list";
+import { OfferOutcomes } from "@/components/offer-outcomes";
 
 export default async function HomePage() {
   const ctx = await getShellContext();
@@ -32,11 +33,19 @@ export default async function HomePage() {
       </Card>
 
       {employee && (
-        <OfferList
-          supabase={ctx.supabase}
-          employeeId={employee.id}
-          companyId={ctx.membership.company_id}
-        />
+        <>
+          {/* Outcome first: it answers "what happened?" before "what's new?" */}
+          <OfferOutcomes
+            supabase={ctx.supabase}
+            employeeId={employee.id}
+            companyId={ctx.membership.company_id}
+          />
+          <OfferList
+            supabase={ctx.supabase}
+            employeeId={employee.id}
+            companyId={ctx.membership.company_id}
+          />
+        </>
       )}
 
       <div className="grid grid-cols-3 gap-2">

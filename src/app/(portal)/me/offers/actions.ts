@@ -72,7 +72,15 @@ export const respondToOffer = validatedAction(
       shift_id: string;
       status: string;
     } | null;
-    if (!offer || offer.company_id !== companyId) {
+
+    // A null embed here means the offer is no longer open: the response row is
+    // readable (it is the employee's own) but shift_offers_offered_select only
+    // exposes open offers. Tenancy is already settled by the response guard
+    // above, so this is a closed offer, not an access violation — reporting it
+    // as one produced a generic "could not be saved" error on a request that
+    // never needed to be saved.
+    if (!offer) return { kind: "offer_closed" };
+    if (offer.company_id !== companyId) {
       throw new AuthzError("wrong_tenant", "offer not accessible");
     }
 

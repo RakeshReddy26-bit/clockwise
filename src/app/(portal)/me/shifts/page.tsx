@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Term, SiteName, localizedSite } from "@/components/localized-term";
 import { OfferList } from "@/components/offer-list";
+import { OfferOutcomes } from "@/components/offer-outcomes";
 import { ClockInPanel } from "./clock-in-panel";
 
 type AssignmentRow = {
@@ -102,6 +103,12 @@ export default async function MyShiftsPage() {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-xl font-semibold tracking-tight">{t("title")}</h1>
+
+      <OfferOutcomes
+        supabase={ctx.supabase}
+        employeeId={employee.id}
+        companyId={ctx.membership.company_id}
+      />
 
       <OfferList
         supabase={ctx.supabase}
