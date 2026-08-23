@@ -7,6 +7,7 @@ import { Term, SiteName, localizedSite } from "@/components/localized-term";
 import { OfferList } from "@/components/offer-list";
 import { OfferOutcomes } from "@/components/offer-outcomes";
 import { ClockInPanel } from "./clock-in-panel";
+import { CancelPanel } from "./cancel-panel";
 
 type AssignmentRow = {
   id: string;
@@ -25,6 +26,7 @@ type AssignmentRow = {
 export default async function MyShiftsPage() {
   const ctx = await getShellContext();
   const t = await getTranslations("myShifts");
+  const tc = await getTranslations("cancellation");
   const locale = await getLocale();
 
   const { data: employee } = await ctx.supabase
@@ -45,7 +47,11 @@ export default async function MyShiftsPage() {
       "id, status, shifts!inner(id, start_time, end_time, required_role, instructions, contact_person, jobs(client_name, location_id))"
     )
     .eq("employee_id", employee.id)
-    .in("status", ["assigned", "accepted"])
+    // 'cancellation_requested' stays in the list: the seat is still theirs
+    // until a manager decides, and a shift that vanished the moment someone
+    // asked to be released would be the same disappearing-card problem the
+    // offer flow had.
+    .in("status", ["assigned", "accepted", "cancellation_requested"])
     .gte("shifts.end_time", nowIso)
     .order("start_time", { referencedTable: "shifts", ascending: true })
     .limit(6);
@@ -95,6 +101,28 @@ export default async function MyShiftsPage() {
     hasPendingRequest = !!pending;
   }
 
+  // Open cancellation requests for every listed assignment, in one query.
+  const assignmentIds = list.map((a) => a.id);
+  const { data: cancelRows } = assignmentIds.length
+    ? await ctx.supabase
+        .from("cancellation_requests")
+        .select("shift_assignment_id")
+        .in("shift_assignment_id", assignmentIds)
+        .eq("status", "pending")
+    : { data: [] };
+  const pendingCancellation = new Set(
+    ((cancelRows ?? []) as Array<{ shift_assignment_id: string }>).map(
+      (r) => r.shift_assignment_id
+    )
+  );
+
+  const statusBadge = (status: string) =>
+    status === "cancellation_requested"
+      ? { variant: "warning" as const, label: tc("badge") }
+      : status === "accepted"
+        ? { variant: "success" as const, label: t("accepted") }
+        : { variant: "secondary" as const, label: t("assigned") };
+
   const fmtTime = (iso: string) =>
     new Date(iso).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
   const fmtDate = (iso: string) =>
@@ -126,8 +154,8 @@ export default async function MyShiftsPage() {
           <CardHeader>
             <div className="flex items-start justify-between gap-2">
               <CardTitle>{t("currentShift")}</CardTitle>
-              <Badge variant={current.status === "accepted" ? "success" : "secondary"}>
-                {current.status === "accepted" ? t("accepted") : t("assigned")}
+              <Badge variant={statusBadge(current.status).variant}>
+                {statusBadge(current.status).label}
               </Badge>
             </div>
           </CardHeader>
@@ -177,6 +205,11 @@ export default async function MyShiftsPage() {
               runningEntryId={runningEntry?.id ?? null}
               hasPendingRequest={hasPendingRequest}
             />
+
+            <CancelPanel
+              assignmentId={current.id}
+              hasPendingRequest={pendingCancellation.has(current.id)}
+            />
           </CardContent>
         </Card>
       )}
@@ -185,7 +218,10 @@ export default async function MyShiftsPage() {
         <div className="flex flex-col gap-2">
           <h2 className="text-sm font-semibold text-muted-foreground">{t("upcoming")}</h2>
           {upcoming.map((a) => (
-            <div key={a.id} className="flex items-center justify-between rounded-lg border bg-card p-3 text-sm">
+            <div
+              key={a.id}
+              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-card p-3 text-sm"
+            >
               <div>
                 <p className="font-medium">{a.shifts?.jobs?.client_name ?? "—"}</p>
                 <p className="text-xs text-muted-foreground tabular-nums">
@@ -194,9 +230,15 @@ export default async function MyShiftsPage() {
                     : ""}
                 </p>
               </div>
-              <Badge variant={a.status === "accepted" ? "success" : "secondary"}>
-                {a.status === "accepted" ? t("accepted") : t("assigned")}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <CancelPanel
+                  assignmentId={a.id}
+                  hasPendingRequest={pendingCancellation.has(a.id)}
+                />
+                <Badge variant={statusBadge(a.status).variant}>
+                  {statusBadge(a.status).label}
+                </Badge>
+              </div>
             </div>
           ))}
         </div>

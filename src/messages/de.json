@@ -229,7 +229,17 @@
     "refused_on_sick_leave": "Diese Person ist krankgemeldet.",
     "approvedSuccess": "{name} wurde eingeteilt.",
     "approvedAndFilled": "{name} wurde eingeteilt. Diese Schicht ist jetzt vollständig besetzt.",
-    "rejectedSuccess": "{name} wurde nicht ausgewählt."
+    "rejectedSuccess": "{name} wurde nicht ausgewählt.",
+    "cancellationsTitle": "Absageanträge",
+    "cancellationsHint": "Der Platz bleibt besetzt, bis Sie entscheiden.",
+    "approveCancellation": "Absage genehmigen",
+    "rejectCancellation": "Absage ablehnen",
+    "cancellationApproved": "{name} wurde ausgeplant. {count, plural, =0 {Schicht bleibt voll besetzt.} one {# Platz ist jetzt frei.} other {# Plätze sind jetzt frei.}}",
+    "cancellationRejected": "Absage von {name} abgelehnt — die Zuweisung bleibt bestehen.",
+    "refusedCancellation_not_pending": "Dieser Antrag wurde bereits entschieden.",
+    "refusedCancellation_assignment_not_active": "Die Zuweisung ist nicht mehr aktiv.",
+    "refusedCancellation_forbidden": "Dafür fehlt Ihnen die Berechtigung.",
+    "refusedCancellation_not_found": "Der Antrag wurde nicht gefunden."
   },
   "myShifts": {
     "title": "Meine Schichten",
@@ -303,5 +313,30 @@
     "reasonAlternate": "Alternativer Einsatzort",
     "reasonInstructed": "Anweisung der Einsatzleitung",
     "reasonOther": "Sonstiges"
+  },
+  "cancellation": {
+    "badge": "Absage beantragt",
+    "request": "Schicht absagen",
+    "reasonLabel": "Grund der Absage",
+    "reasonHint": "Bitte kurz begründen, damit die Disposition planen kann.",
+    "submit": "Antrag senden",
+    "cancel": "Abbrechen",
+    "pending": "Absage beantragt — Entscheidung steht aus.",
+    "stillAssigned": "Bis zur Entscheidung bleiben Sie eingeteilt.",
+    "error": "Der Antrag konnte nicht gesendet werden. Bitte erneut versuchen.",
+    "refused_already_requested": "Für diese Schicht liegt bereits ein Antrag vor.",
+    "refused_not_cancellable": "Diese Zuweisung kann nicht mehr abgesagt werden.",
+    "refused_shift_ended": "Diese Schicht ist bereits beendet."
+  },
+  "requests": {
+    "title": "Meine Anträge",
+    "intro": "Ihre Absageanträge und deren Stand.",
+    "none": "Sie haben bisher keine Anträge gestellt.",
+    "status_pending": "In Prüfung",
+    "status_approved": "Genehmigt",
+    "status_rejected": "Abgelehnt",
+    "submittedOn": "Gestellt am {when}",
+    "decidedOn": "Entschieden am {when}",
+    "stillAssigned": "Bis zur Entscheidung bleiben Sie eingeteilt."
   }
 }

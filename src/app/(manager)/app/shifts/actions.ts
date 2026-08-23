@@ -12,6 +12,7 @@ import {
   OCCUPYING_ASSIGNMENT_STATUSES,
   type IneligibleReason,
 } from "@/lib/eligibility";
+import { classifyDecision } from "@/lib/cancellation";
 
 /**
  * Send an open-shift offer to selected employees.
@@ -385,6 +386,113 @@ export const rejectOfferResponse = validatedAction(
 
     revalidatePath("/app/shifts");
     return { kind: "rejected" };
+  }
+);
+
+/* ------------------------------------------------------------------------- */
+/* C3 — cancellation decisions                                                */
+/* ------------------------------------------------------------------------- */
+
+/** Statuses decide_cancellation_request() can report. */
+export type CancellationDecisionStatus =
+  | "approved"
+  | "rejected"
+  | "not_pending"
+  | "assignment_not_active"
+  | "forbidden"
+  | "not_found";
+
+export type DecideCancellationOutcome =
+  | { kind: "approved"; seatsOpen: number; employeeName: string }
+  | { kind: "rejected"; employeeName: string }
+  | { kind: "refused"; status: CancellationDecisionStatus };
+
+/**
+ * Approve or reject one cancellation request.
+ *
+ * Approval frees the seat, which is a scheduling act — so it needs
+ * `scheduling.manage` (COMPANY_ADMIN and DISPATCHER), not the absence
+ * permission. The vacancy it creates is then filled through the existing
+ * offer workflow; nothing about that workflow is duplicated here.
+ *
+ * The decision itself is made by the SQL function under a shift lock, so a
+ * double click resolves to one decision and one refusal.
+ */
+export const decideCancellationRequest = validatedAction(
+  z.object({ requestId: uuid, approve: z.boolean() }),
+  async (input): Promise<DecideCancellationOutcome> => {
+    const ctx = await requirePermission("scheduling.manage");
+    const companyId = ctx.membership.company_id;
+
+    const { data: request } = await ctx.supabase
+      .from("cancellation_requests")
+      .select(
+        "id, company_id, status, shift_assignment_id, shift_assignments(employee_id, shift_id, employees(full_name))"
+      )
+      .eq("id", input.requestId)
+      .maybeSingle();
+
+    if (!request || request.company_id !== companyId) {
+      throw new AuthzError("wrong_tenant", "cancellation request not accessible");
+    }
+
+    const assignment = request.shift_assignments as unknown as {
+      employee_id: string;
+      shift_id: string;
+      employees: { full_name: string } | null;
+    } | null;
+    const employeeName = assignment?.employees?.full_name ?? "";
+
+    const verdict = classifyDecision(request.status);
+    if (verdict.kind === "refused") return { kind: "refused", status: "not_pending" };
+
+    const { data, error } = await ctx.supabase.rpc("decide_cancellation_request", {
+      p_request_id: request.id,
+      p_approve: input.approve,
+    });
+    if (error) throw new Error(`cancellation decision failed: ${error.message}`);
+
+    const result = data as {
+      status: CancellationDecisionStatus;
+      seats_open?: number;
+      assignment_status?: string;
+    };
+
+    if (result.status !== "approved" && result.status !== "rejected") {
+      return { kind: "refused", status: result.status };
+    }
+
+    if (assignment) {
+      await notifyDecision(ctx, {
+        employeeId: assignment.employee_id,
+        type: result.status === "approved" ? "cancellation_approved" : "cancellation_rejected",
+        payload: {
+          request_id: request.id,
+          shift_id: assignment.shift_id,
+          shift_assignment_id: request.shift_assignment_id,
+        },
+      });
+    }
+
+    await writeAudit(ctx, {
+      action:
+        result.status === "approved"
+          ? "cancellation_request.approved"
+          : "cancellation_request.rejected",
+      entity: "cancellation_requests",
+      entityId: request.id,
+      diff: {
+        assignment_status: result.assignment_status,
+        seats_open: result.seats_open,
+      },
+    });
+
+    revalidatePath("/app/shifts");
+    revalidatePath("/app");
+
+    return result.status === "approved"
+      ? { kind: "approved", seatsOpen: result.seats_open ?? 0, employeeName }
+      : { kind: "rejected", employeeName };
   }
 );
 

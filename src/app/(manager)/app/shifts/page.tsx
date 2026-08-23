@@ -8,6 +8,7 @@ import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { cn } from "@/lib/utils";
 import { loadCandidateInputsForShift, toShiftContext, type ShiftRow } from "@/lib/candidates";
 import { rankCandidates, OCCUPYING_ASSIGNMENT_STATUSES, type IneligibleReason } from "@/lib/eligibility";
+import { CancellationRequests } from "@/components/cancellation-requests";
 import { OfferPanel, type CandidateView } from "./offer-panel";
 import { ResponseActions } from "./response-actions";
 
@@ -163,7 +164,18 @@ export default async function ShiftPlanningPage({
     <div className="flex flex-col gap-4">
       <RealtimeRefresh
         companyId={ctx.membership.company_id}
-        tables={["shifts", "shift_assignments", "shift_offers", "shift_offer_responses"]}
+        tables={[
+          "shifts",
+          "shift_assignments",
+          "shift_offers",
+          "shift_offer_responses",
+          "cancellation_requests",
+        ]}
+      />
+
+      <CancellationRequests
+        supabase={ctx.supabase}
+        companyId={ctx.membership.company_id}
       />
 
       <div className="flex flex-wrap items-baseline justify-between gap-2">

@@ -11,6 +11,10 @@ import {
   shouldSendOutsideAlert,
   type ClockVerification,
 } from "@/lib/geofence";
+import {
+  classifyCancellationRequest,
+  type RequestRefusal,
+} from "@/lib/cancellation";
 
 /**
  * Geofenced clock-in/out + manual override requests.
@@ -195,7 +199,10 @@ export const clockIn = validatedAction(
       employee.id
     );
 
-    if (!["assigned", "accepted"].includes(assignment.status)) {
+    // 'cancellation_requested' is included deliberately: the seat is still
+    // occupied while a manager decides, so the employee is still expected on
+    // site and must be able to clock in. Cancelled and completed are not.
+    if (!["assigned", "accepted", "cancellation_requested"].includes(assignment.status)) {
       throw new AuthzError("forbidden", "assignment is not active");
     }
 
@@ -421,5 +428,104 @@ export const requestManualClockIn = validatedAction(
 
     revalidatePath("/me/shifts");
     return { outcome: "requested" as const };
+  }
+);
+
+/* ------------------------------------------------------------------------- */
+/* C2 — employee cancellation request                                         */
+/* ------------------------------------------------------------------------- */
+
+/** Statuses request_shift_cancellation() can report. */
+type SqlRequestStatus =
+  | "requested"
+  | "already_requested"
+  | "not_cancellable"
+  | "shift_ended"
+  | "forbidden"
+  | "not_found";
+
+export type CancellationRequestOutcome =
+  | { kind: "requested" }
+  | { kind: "refused"; reason: RequestRefusal };
+
+/**
+ * Ask to be released from one of your own shifts.
+ *
+ * Two layers, the same shape as B4: the rule is evaluated here against freshly
+ * loaded rows so the employee gets a specific sentence, then
+ * request_shift_cancellation() repeats only what a concurrent transaction
+ * could invalidate — while holding the shift lock, and writing the request and
+ * the assignment status together.
+ *
+ * The seat is deliberately NOT freed. Until a manager approves, the assignment
+ * still counts toward staffing, so nothing silently uncovers a site.
+ */
+export const requestShiftCancellation = validatedAction(
+  z.object({
+    shiftAssignmentId: uuid,
+    reason: z.string().trim().min(5).max(500),
+  }),
+  async (input): Promise<CancellationRequestOutcome> => {
+    const ctx = await requireContext();
+    const employee = await resolveEmployee(ctx);
+    const { assignment, shift } = await resolveOwnAssignment(
+      ctx,
+      input.shiftAssignmentId,
+      employee.id
+    );
+
+    const { data: pending } = await ctx.supabase
+      .from("cancellation_requests")
+      .select("id")
+      .eq("shift_assignment_id", assignment.id)
+      .eq("status", "pending")
+      .limit(1)
+      .maybeSingle();
+
+    const verdict = classifyCancellationRequest({
+      assignmentStatus: assignment.status,
+      shiftEnd: new Date(shift.end_time),
+      hasPendingRequest: Boolean(pending),
+      now: new Date(),
+    });
+    if (verdict.kind === "refused") return verdict;
+
+    const { data, error } = await ctx.supabase.rpc("request_shift_cancellation", {
+      p_assignment_id: assignment.id,
+      p_reason: input.reason,
+    });
+    if (error) throw new Error(`cancellation request failed: ${error.message}`);
+
+    const result = data as { status: SqlRequestStatus; request_id?: string };
+
+    if (result.status !== "requested") {
+      switch (result.status) {
+        case "already_requested":
+          return { kind: "refused", reason: "already_requested" };
+        case "shift_ended":
+          return { kind: "refused", reason: "shift_ended" };
+        case "not_cancellable":
+          return { kind: "refused", reason: "not_cancellable" };
+        default:
+          // forbidden / not_found cannot follow the checks above unless the
+          // row moved out from under us; treat as an access problem.
+          throw new AuthzError("forbidden", `cancellation refused: ${result.status}`);
+      }
+    }
+
+    // Reached only on a real transition, so a retry notifies nobody twice.
+    await notifyStaff(ctx.membership.company_id, "cancellation_requested", {
+      request_id: result.request_id,
+      shift_assignment_id: assignment.id,
+      shift_id: shift.id,
+      employee_id: employee.id,
+      employee_name: employee.full_name,
+      requested_at: new Date().toISOString(),
+    });
+
+    revalidatePath("/me/shifts");
+    revalidatePath("/me/requests");
+    revalidatePath("/app/shifts");
+    return { kind: "requested" };
   }
 );

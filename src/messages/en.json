@@ -229,7 +229,17 @@
     "refused_on_sick_leave": "This employee has reported sick.",
     "approvedSuccess": "{name} assigned successfully.",
     "approvedAndFilled": "{name} assigned. This shift is now fully staffed.",
-    "rejectedSuccess": "{name} was not selected."
+    "rejectedSuccess": "{name} was not selected.",
+    "cancellationsTitle": "Cancellation requests",
+    "cancellationsHint": "The seat stays filled until you decide.",
+    "approveCancellation": "Approve cancellation",
+    "rejectCancellation": "Reject cancellation",
+    "cancellationApproved": "{name} was released. {count, plural, =0 {The shift is still fully staffed.} one {# seat is now open.} other {# seats are now open.}}",
+    "cancellationRejected": "Cancellation for {name} rejected — the assignment stands.",
+    "refusedCancellation_not_pending": "This request has already been decided.",
+    "refusedCancellation_assignment_not_active": "The assignment is no longer active.",
+    "refusedCancellation_forbidden": "You do not have permission for that.",
+    "refusedCancellation_not_found": "The request could not be found."
   },
   "myShifts": {
     "title": "My shifts",
@@ -303,5 +313,30 @@
     "reasonAlternate": "Working from alternate location",
     "reasonInstructed": "Manager instructed me",
     "reasonOther": "Other"
+  },
+  "cancellation": {
+    "badge": "Cancellation requested",
+    "request": "Request cancellation",
+    "reasonLabel": "Reason for cancelling",
+    "reasonHint": "A short reason helps dispatch plan the replacement.",
+    "submit": "Send request",
+    "cancel": "Cancel",
+    "pending": "Cancellation requested — awaiting a decision.",
+    "stillAssigned": "You stay assigned until it is decided.",
+    "error": "The request could not be sent. Please try again.",
+    "refused_already_requested": "A request for this shift is already open.",
+    "refused_not_cancellable": "This assignment can no longer be cancelled.",
+    "refused_shift_ended": "This shift has already ended."
+  },
+  "requests": {
+    "title": "My requests",
+    "intro": "Your cancellation requests and where they stand.",
+    "none": "You have not submitted any requests yet.",
+    "status_pending": "Under review",
+    "status_approved": "Approved",
+    "status_rejected": "Rejected",
+    "submittedOn": "Submitted {when}",
+    "decidedOn": "Decided {when}",
+    "stillAssigned": "You stay assigned until it is decided."
   }
 }
