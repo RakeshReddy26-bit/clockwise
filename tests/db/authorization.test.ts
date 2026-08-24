@@ -414,13 +414,15 @@ describe("HR_MANAGER — reads the schedule, cannot change it", () => {
   });
 
   it("cannot decide a cancellation request", async () => {
-    await db.query("update public.shift_assignments set status='cancellation_requested' where id=$1", [
-      A_ASSIGNMENT,
-    ]);
+    // The request already exists from reset(); 0013 requires it to exist
+    // BEFORE the assignment can be parked.
     const { rows } = await db.query(
       "select id from public.cancellation_requests where shift_assignment_id = $1",
       [A_ASSIGNMENT]
     );
+    await db.query("update public.shift_assignments set status='cancellation_requested' where id=$1", [
+      A_ASSIGNMENT,
+    ]);
 
     const result = await rpc(HR, "select public.decide_cancellation_request($1,true) as r", [
       rows[0].id,

@@ -172,6 +172,13 @@ describe("attendance runner selection", () => {
   }
 
   it("loads an assignment whose cancellation is still pending", async () => {
+    // 0013 makes the parked state impossible without the request that explains
+    // it, so the fixture has to arrive there the way production does.
+    await db.query(
+      `insert into public.cancellation_requests (company_id, shift_assignment_id, reason)
+       values ($1,$2,'Testaufbau') on conflict do nothing`,
+      [COMPANY_A, A_ASSIGNMENT]
+    );
     await db.query("update public.shift_assignments set status = 'cancellation_requested' where id = $1", [
       A_ASSIGNMENT,
     ]);
