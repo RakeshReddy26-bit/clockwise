@@ -143,3 +143,56 @@ describe("tenant isolation for attendance alerts", () => {
     expect(count).toBe(3);
   });
 });
+
+/**
+ * Runner selection.
+ *
+ * The evaluation runner loads assignments with an explicit status list. If
+ * 'cancellation_requested' is missing from it, no snapshot is ever built for
+ * those people and evaluateAlerts() is never even reached — a silent gap that
+ * no amount of pure-function testing would catch. This asserts the predicate
+ * itself against real rows.
+ *
+ * Kept in sync with src/lib/attendance-runner.ts by construction: change one
+ * without the other and this fails.
+ */
+const RUNNER_STATUSES = ["assigned", "accepted", "cancellation_requested", "completed"];
+
+describe("attendance runner selection", () => {
+  async function selectedStatuses(): Promise<string[]> {
+    const { rows } = await db.query(
+      `select sa.status
+       from public.shift_assignments sa
+       join public.shifts s on s.id = sa.shift_id
+       where sa.company_id = $1 and sa.status = any($2::public.assignment_status[])
+       order by sa.status`,
+      [COMPANY_A, RUNNER_STATUSES]
+    );
+    return rows.map((r) => r.status as string);
+  }
+
+  it("loads an assignment whose cancellation is still pending", async () => {
+    await db.query("update public.shift_assignments set status = 'cancellation_requested' where id = $1", [
+      A_ASSIGNMENT,
+    ]);
+    expect(await selectedStatuses()).toContain("cancellation_requested");
+  });
+
+  it("does not load an assignment whose cancellation was approved", async () => {
+    await db.query("update public.shift_assignments set status = 'cancelled' where id = $1", [
+      A_ASSIGNMENT,
+    ]);
+    expect(await selectedStatuses()).not.toContain("cancelled");
+  });
+
+  it("still loads ordinary assigned and accepted rows", async () => {
+    await db.query("update public.shift_assignments set status = 'accepted' where id = $1", [
+      A_ASSIGNMENT,
+    ]);
+    expect(await selectedStatuses()).toContain("accepted");
+    await db.query("update public.shift_assignments set status = 'assigned' where id = $1", [
+      A_ASSIGNMENT,
+    ]);
+    expect(await selectedStatuses()).toContain("assigned");
+  });
+});

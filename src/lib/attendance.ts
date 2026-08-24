@@ -68,9 +68,23 @@ export function minutesBetween(a: Date, b: Date): number {
   return Math.floor((a.getTime() - b.getTime()) / MINUTE);
 }
 
-/** Assignments that no longer require attendance. */
+/**
+ * Assignments that no longer require attendance.
+ *
+ * THE INVARIANT: requesting a cancellation does not release the employee —
+ * approving it does. Until a manager approves, the seat is still occupied and
+ * the employee is still expected on site, so 'cancellation_requested' is an
+ * ACTIVE status here. Treating it as inactive silently suppressed late and
+ * no-show alerts for exactly the people most likely to not turn up, while the
+ * shift still counted as staffed.
+ *
+ * The same invariant holds in staffing (recalc_shift_staffing counts it as
+ * occupying), clock-in (the employee may still clock in), the manager day
+ * board, offer approval (approve_shift_offer counts it toward capacity) and
+ * the replacement flow. All six must agree.
+ */
 export function isInactiveAssignment(status: string): boolean {
-  return status === "cancelled" || status === "cancellation_requested";
+  return status === "cancelled";
 }
 
 /** Current operational status of one assignment. */

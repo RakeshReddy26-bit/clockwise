@@ -8,6 +8,7 @@ import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { cn } from "@/lib/utils";
 import { loadCandidateInputsForShift, toShiftContext, type ShiftRow } from "@/lib/candidates";
 import { rankCandidates, OCCUPYING_ASSIGNMENT_STATUSES, type IneligibleReason } from "@/lib/eligibility";
+import { roleHas } from "@/lib/permissions";
 import { CancellationRequests } from "@/components/cancellation-requests";
 import { OfferPanel, type CandidateView } from "./offer-panel";
 import { ResponseActions } from "./response-actions";
@@ -176,6 +177,7 @@ export default async function ShiftPlanningPage({
       <CancellationRequests
         supabase={ctx.supabase}
         companyId={ctx.membership.company_id}
+        canDecide={roleHas(ctx.membership.role, "scheduling.manage")}
       />
 
       <div className="flex flex-wrap items-baseline justify-between gap-2">

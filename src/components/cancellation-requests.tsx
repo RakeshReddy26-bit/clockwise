@@ -1,5 +1,6 @@
 import { getTranslations, getLocale } from "next-intl/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SiteName } from "@/components/localized-term";
 import { CancellationActions } from "@/app/(manager)/app/shifts/cancellation-actions";
@@ -32,9 +33,18 @@ type Row = {
 export async function CancellationRequests({
   supabase,
   companyId,
+  canDecide,
 }: {
   supabase: SupabaseClient;
   companyId: string;
+  /**
+   * Whether this viewer holds `scheduling.manage`. UX alignment only — the
+   * decision is refused by the Server Action and again by app.is_staff() in
+   * decide_cancellation_request(). Hiding a button is never the authorization.
+   * An HR manager still needs to SEE that a request is outstanding; what they
+   * do not get is a control that would fail on click.
+   */
+  canDecide: boolean;
 }) {
   const t = await getTranslations("planning");
   const locale = await getLocale();
@@ -72,7 +82,9 @@ export async function CancellationRequests({
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
-        <p className="text-xs text-muted-foreground">{t("cancellationsHint")}</p>
+        <p className="text-xs text-muted-foreground">
+          {canDecide ? t("cancellationsHint") : t("cancellationsReadOnly")}
+        </p>
         <ul className="flex flex-col gap-2">
           {rows.map((row) => {
             const shift = row.shift_assignments?.shifts ?? null;
@@ -98,10 +110,14 @@ export async function CancellationRequests({
                     {row.reason}
                   </p>
                 </div>
-                <CancellationActions
-                  requestId={row.id}
-                  employeeName={employee?.full_name ?? ""}
-                />
+                {canDecide ? (
+                  <CancellationActions
+                    requestId={row.id}
+                    employeeName={employee?.full_name ?? ""}
+                  />
+                ) : (
+                  <Badge variant="warning">{t("cancellationPendingBadge")}</Badge>
+                )}
               </li>
             );
           })}

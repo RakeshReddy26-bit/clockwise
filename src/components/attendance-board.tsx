@@ -22,6 +22,13 @@ export type BoardRow = {
   distanceM: number | null;
   status: AttendanceStatus;
   minutesLate: number | null;
+  /**
+   * The employee has asked to be released and no manager has decided yet.
+   * Deliberately separate from `status`: they are still assigned AND still
+   * expected, so their attendance status stays truthful. This only adds the
+   * second fact the manager needs to see at the same time.
+   */
+  cancellationPending: boolean;
 };
 
 export type BoardFilters = {
@@ -209,6 +216,11 @@ export async function AttendanceBoard({
                     <span className="ml-1.5 text-xs text-muted-foreground tabular-nums">
                       +{formatMinutes(r.minutesLate)}
                     </span>
+                  )}
+                  {r.cancellationPending && (
+                    <Badge variant="warning" className="ml-1.5">
+                      {t("cancellationPending")}
+                    </Badge>
                   )}
                 </td>
               </tr>

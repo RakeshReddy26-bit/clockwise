@@ -452,6 +452,49 @@ describe("freed seat meets an open offer", () => {
     requestId = result.request_id as string;
   });
 
+  it("keeps the seat occupied while the request is pending, so the offer cannot fill it", async () => {
+    // Business-critical: asking to be released is not being released. Until a
+    // manager approves, the last seat is still taken and a replacement must be
+    // refused — otherwise two people believe they hold the same seat.
+    expect(await occupiedSeats()).toBe(1);
+    expect(await assignmentStatus()).toBe("cancellation_requested");
+    expect(await shiftStatus()).toBe("staffed");
+
+    const blocked = await runAs(
+      USERS.aDispatcher,
+      async (q) =>
+        (
+          await q("select public.approve_shift_offer($1) as result", [
+            OFFER_RESPONSES.aColleague,
+          ])
+        ).rows[0].result as { status: string; assignment_id?: string },
+      { commit: true }
+    );
+    expect(blocked.status).toBe("no_vacancy");
+    expect(blocked.assignment_id).toBeUndefined();
+    expect(await occupiedSeats()).toBe(1);
+
+    // ...and only approval opens it.
+    await decideAs(USERS.aDispatcher, requestId, true);
+    expect(await occupiedSeats()).toBe(0);
+    expect(await shiftStatus()).toBe("open");
+
+    const allowed = await runAs(
+      USERS.aDispatcher,
+      async (q) =>
+        (
+          await q("select public.approve_shift_offer($1) as result", [
+            OFFER_RESPONSES.aColleague,
+          ])
+        ).rows[0].result as { status: string; assignment_id?: string },
+      { commit: true }
+    );
+    expect(allowed.status).toBe("approved");
+    expect(allowed.assignment_id).toBeTruthy();
+    expect(await occupiedSeats()).toBe(1);
+    expect(await shiftStatus()).toBe("staffed");
+  });
+
   it("leaves the existing open offer untouched", async () => {
     const before = await db.query(
       "select status, closed_at from public.shift_offers where id = $1",

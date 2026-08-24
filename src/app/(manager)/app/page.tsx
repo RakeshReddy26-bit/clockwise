@@ -85,7 +85,11 @@ export default async function DashboardPage({
         "id, employee_id, status, shifts!inner(id, start_time, end_time, required_role, required_count, status, jobs(client_name, location_id, locations(name))), employees(full_name, department_id, departments(name))"
       )
       .eq("company_id", ctx.membership.company_id)
-      .in("status", ["assigned", "accepted", "completed"])
+      // 'cancellation_requested' belongs on the day board: the employee is
+      // still assigned and still expected until a manager approves. Dropping
+      // them made someone with an open request vanish from the operational
+      // view while the shift still counted as staffed.
+      .in("status", ["assigned", "accepted", "cancellation_requested", "completed"])
       .gte("shifts.start_time", dayStart.toISOString())
       .lt("shifts.start_time", dayEnd.toISOString())
       .order("start_time", { referencedTable: "shifts", ascending: true }),
@@ -179,6 +183,7 @@ export default async function DashboardPage({
         distanceM: entry?.clock_in_distance_m ?? null,
         status,
         minutesLate: minutesLate != null && minutesLate > 0 ? minutesLate : null,
+        cancellationPending: r.status === "cancellation_requested",
       };
     });
 

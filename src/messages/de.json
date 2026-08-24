@@ -135,7 +135,8 @@
     "alert_early_clock_out": "Früh ausgestempelt",
     "openShifts": "Offene Schichten",
     "noOpenShifts": "Alle Schichten sind besetzt.",
-    "allShifts": "Alle Schichten ansehen"
+    "allShifts": "Alle Schichten ansehen",
+    "cancellationPending": "Absage beantragt"
   },
   "offers": {
     "sectionTitle": "Offene Schichtangebote ({count})",
@@ -239,7 +240,9 @@
     "refusedCancellation_not_pending": "Dieser Antrag wurde bereits entschieden.",
     "refusedCancellation_assignment_not_active": "Die Zuweisung ist nicht mehr aktiv.",
     "refusedCancellation_forbidden": "Dafür fehlt Ihnen die Berechtigung.",
-    "refusedCancellation_not_found": "Der Antrag wurde nicht gefunden."
+    "refusedCancellation_not_found": "Der Antrag wurde nicht gefunden.",
+    "cancellationsReadOnly": "Nur zur Information — entschieden wird von der Einsatzplanung.",
+    "cancellationPendingBadge": "Entscheidung ausstehend"
   },
   "myShifts": {
     "title": "Meine Schichten",
@@ -321,12 +324,12 @@
     "reasonHint": "Bitte kurz begründen, damit die Disposition planen kann.",
     "submit": "Antrag senden",
     "cancel": "Abbrechen",
-    "pending": "Absage beantragt — Entscheidung steht aus.",
     "stillAssigned": "Bis zur Entscheidung bleiben Sie eingeteilt.",
     "error": "Der Antrag konnte nicht gesendet werden. Bitte erneut versuchen.",
     "refused_already_requested": "Für diese Schicht liegt bereits ein Antrag vor.",
     "refused_not_cancellable": "Diese Zuweisung kann nicht mehr abgesagt werden.",
-    "refused_shift_ended": "Diese Schicht ist bereits beendet."
+    "refused_shift_ended": "Diese Schicht ist bereits beendet.",
+    "awaiting": "Die Einsatzleitung entscheidet darüber."
   },
   "requests": {
     "title": "Meine Anträge",

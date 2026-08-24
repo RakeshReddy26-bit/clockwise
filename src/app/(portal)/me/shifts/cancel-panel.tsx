@@ -29,11 +29,18 @@ export function CancelPanel({
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // One request at a time: while a decision is outstanding there is no second
+  // button to press, so a duplicate cannot be created from the UI at all.
   if (hasPendingRequest || sent) {
     return (
-      <p role="status" className="text-xs text-warning">
-        {t("pending")} <span className="text-muted-foreground">{t("stillAssigned")}</span>
-      </p>
+      <div
+        role="status"
+        className="flex flex-col gap-0.5 rounded-md border border-warning/40 bg-warning/5 p-2.5"
+      >
+        <p className="text-sm font-medium text-warning">{t("badge")}</p>
+        <p className="text-xs text-muted-foreground">{t("awaiting")}</p>
+        <p className="text-xs text-muted-foreground">{t("stillAssigned")}</p>
+      </div>
     );
   }
 
@@ -63,8 +70,10 @@ export function CancelPanel({
 
   if (!showForm) {
     return (
+      // Outlined, not destructive: asking to be released is a normal request,
+      // not a dangerous action, and a red button would read as one.
       <div className="flex flex-col items-start gap-1">
-        <Button variant="ghost" size="sm" onClick={() => setShowForm(true)} disabled={isPending}>
+        <Button variant="outline" size="sm" onClick={() => setShowForm(true)} disabled={isPending}>
           {t("request")}
         </Button>
         {error && (

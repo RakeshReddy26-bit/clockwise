@@ -137,10 +137,60 @@ describe("2. no-show alert generation", () => {
 
   it("cancelled assignments never alert", () => {
     expect(evaluateAlerts(snap({ assignmentStatus: "cancelled" }), T, at("2026-08-22T02:00:00Z"))).toEqual([]);
-    expect(
-      evaluateAlerts(snap({ assignmentStatus: "cancellation_requested" }), T, at("2026-08-22T02:00:00Z"))
-    ).toEqual([]);
     expect(isInactiveAssignment("cancelled")).toBe(true);
+  });
+});
+
+/**
+ * THE INVARIANT: requesting a cancellation does not release the employee —
+ * approving it does. Until then the seat is occupied and the person is
+ * expected, so attendance has to keep watching them. Treating
+ * 'cancellation_requested' as inactive suppressed alerts for precisely the
+ * people most likely not to turn up.
+ */
+describe("2b. a pending cancellation does not suspend attendance", () => {
+  const pending = { assignmentStatus: "cancellation_requested" };
+
+  it("is not an inactive assignment", () => {
+    expect(isInactiveAssignment("cancellation_requested")).toBe(false);
+    expect(isInactiveAssignment("assigned")).toBe(false);
+    expect(isInactiveAssignment("accepted")).toBe(false);
+  });
+
+  it("still raises the late alert", () => {
+    expect(evaluateAlerts(snap(pending), T, at("2026-08-21T20:10:00Z"))).toEqual([
+      { type: "late_clock_in", minutesDelta: 10 },
+    ]);
+  });
+
+  it("still escalates to no-show", () => {
+    expect(evaluateAlerts(snap(pending), T, at("2026-08-21T20:45:00Z"))).toEqual([
+      { type: "late_clock_in", minutesDelta: 45 },
+      { type: "no_show", minutesDelta: 45 },
+    ]);
+  });
+
+  it("still raises early clock-out", () => {
+    expect(
+      evaluateAlerts(
+        snap({ ...pending, clockIn: START, clockOut: at("2026-08-22T04:45:00Z") }),
+        T,
+        at("2026-08-22T05:00:00Z")
+      )
+    ).toEqual([{ type: "early_clock_out", minutesDelta: 75 }]);
+  });
+
+  it("alerts exactly as an assigned employee would", () => {
+    const when = at("2026-08-21T20:45:00Z");
+    expect(evaluateAlerts(snap(pending), T, when)).toEqual(
+      evaluateAlerts(snap({ assignmentStatus: "assigned" }), T, when)
+    );
+  });
+
+  it("but an approved cancellation does end the obligation", () => {
+    expect(evaluateAlerts(snap({ assignmentStatus: "cancelled" }), T, at("2026-08-21T20:45:00Z"))).toEqual(
+      []
+    );
   });
 });
 

@@ -135,7 +135,8 @@
     "alert_early_clock_out": "Early clock-out",
     "openShifts": "Open shifts",
     "noOpenShifts": "All shifts are staffed.",
-    "allShifts": "View all shifts"
+    "allShifts": "View all shifts",
+    "cancellationPending": "Cancellation pending"
   },
   "offers": {
     "sectionTitle": "Open shift offers ({count})",
@@ -239,7 +240,9 @@
     "refusedCancellation_not_pending": "This request has already been decided.",
     "refusedCancellation_assignment_not_active": "The assignment is no longer active.",
     "refusedCancellation_forbidden": "You do not have permission for that.",
-    "refusedCancellation_not_found": "The request could not be found."
+    "refusedCancellation_not_found": "The request could not be found.",
+    "cancellationsReadOnly": "For information only — scheduling decides these.",
+    "cancellationPendingBadge": "Awaiting decision"
   },
   "myShifts": {
     "title": "My shifts",
@@ -321,12 +324,12 @@
     "reasonHint": "A short reason helps dispatch plan the replacement.",
     "submit": "Send request",
     "cancel": "Cancel",
-    "pending": "Cancellation requested — awaiting a decision.",
     "stillAssigned": "You stay assigned until it is decided.",
     "error": "The request could not be sent. Please try again.",
     "refused_already_requested": "A request for this shift is already open.",
     "refused_not_cancellable": "This assignment can no longer be cancelled.",
-    "refused_shift_ended": "This shift has already ended."
+    "refused_shift_ended": "This shift has already ended.",
+    "awaiting": "A manager will decide on it."
   },
   "requests": {
     "title": "My requests",

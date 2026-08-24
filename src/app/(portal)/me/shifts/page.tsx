@@ -196,6 +196,16 @@ export default async function MyShiftsPage() {
               </p>
             )}
 
+            {/*
+              Above the clock-in panel on purpose. Below it, the action sat
+              under the site map and the locate button — off the bottom of a
+              phone screen, and easy to miss entirely.
+            */}
+            <CancelPanel
+              assignmentId={current.id}
+              hasPendingRequest={pendingCancellation.has(current.id)}
+            />
+
             <Separator />
 
             <ClockInPanel
@@ -204,11 +214,6 @@ export default async function MyShiftsPage() {
               site={site}
               runningEntryId={runningEntry?.id ?? null}
               hasPendingRequest={hasPendingRequest}
-            />
-
-            <CancelPanel
-              assignmentId={current.id}
-              hasPendingRequest={pendingCancellation.has(current.id)}
             />
           </CardContent>
         </Card>

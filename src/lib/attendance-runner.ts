@@ -95,7 +95,11 @@ export async function evaluateAttendance(
         "id, company_id, employee_id, status, shifts!inner(start_time, end_time), employees(full_name)"
       )
       .eq("company_id", company.id)
-      .in("status", ["assigned", "accepted", "completed"])
+      // 'cancellation_requested' is loaded on purpose: asking to be released is
+      // not being released. The employee still holds the seat and is still
+      // expected, so late and no-show detection must keep running for them
+      // until a manager approves. isInactiveAssignment() filters the rest.
+      .in("status", ["assigned", "accepted", "cancellation_requested", "completed"])
       .gte("shifts.start_time", windowStart)
       .lte("shifts.start_time", windowEnd);
     if (assignmentError) throw new Error(`assignments: ${assignmentError.message}`);
