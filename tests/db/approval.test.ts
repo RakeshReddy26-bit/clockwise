@@ -11,6 +11,7 @@ import { Client } from "pg";
 import {
   createTestDatabase,
   runAs as runAsUser,
+  setEmploymentStatus,
   type QueryFn,
   USERS,
   COMPANY_A,
@@ -78,10 +79,7 @@ async function resetScenario({ requiredCount = 1 } = {}) {
      where offer_id = $1`,
     [OFFERS.a]
   );
-  await db.query(
-    "update public.employees set employment_status = 'active' where company_id = $1",
-    [COMPANY_A]
-  );
+  await setEmploymentStatus(db, COMPANY_A);
 }
 
 beforeAll(async () => {
@@ -229,9 +227,18 @@ describe("refusals", () => {
   });
 
   it("an employee deactivated after responding cannot be approved", async () => {
-    await db.query("update public.employees set employment_status = 'terminated' where id = $1", [
-      EMPLOYEES.aSelf,
-    ]);
+    // Deactivation runs as the company admin, not on the owner connection:
+    // guard_employee_self_mutation (0016) exempts HR and nobody else, and the
+    // owner connection carries no membership. Writing it the honest way keeps
+    // this test about approval rather than about the harness.
+    await runAs(
+      USERS.aAdmin,
+      (q) =>
+        q("update public.employees set employment_status = 'terminated' where id = $1", [
+          EMPLOYEES.aSelf,
+        ]),
+      { commit: true }
+    );
     expect((await approveAs(USERS.aDispatcher, OFFER_RESPONSES.aSelf)).status).toBe(
       "employee_inactive"
     );

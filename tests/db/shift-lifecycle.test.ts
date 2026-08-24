@@ -13,6 +13,7 @@ import { Client } from "pg";
 import {
   createTestDatabase,
   runAs as runAsUser,
+  setEmploymentStatus,
   type QueryFn,
   USERS,
   COMPANY_A,
@@ -158,9 +159,7 @@ async function reset({ occupied = 1, requiredCount = 2 } = {}) {
      where offer_id = $1`,
     [OFFERS.a]
   );
-  await db.query("update public.employees set employment_status='active' where company_id=$1", [
-    COMPANY_A,
-  ]);
+  await setEmploymentStatus(db, COMPANY_A);
 }
 
 /** Drop the offer so the shift sits at engagement 'none'. */

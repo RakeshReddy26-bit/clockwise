@@ -15,6 +15,7 @@ import { Client } from "pg";
 import {
   createTestDatabase,
   runAs as runAsUser,
+  setEmploymentStatus,
   type QueryFn,
   USERS,
   COMPANY_A,
@@ -140,9 +141,7 @@ async function resetScenario({ requiredCount = 1, secondSeat = false } = {}) {
      where offer_id = $1`,
     [OFFERS.a]
   );
-  await db.query("update public.employees set employment_status = 'active' where company_id = $1", [
-    COMPANY_A,
-  ]);
+  await setEmploymentStatus(db, COMPANY_A);
 }
 
 beforeAll(async () => {

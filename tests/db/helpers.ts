@@ -92,6 +92,32 @@ export async function runAs<T>(
   }
 }
 
+/**
+ * Put a company's employees back to a schedulable state between scenarios.
+ *
+ * Runs as the company admin rather than on the owner connection, because
+ * guard_employee_self_mutation (0016) exempts HR and nobody else — and the
+ * owner connection carries no membership, so it is not HR. That is the guard
+ * working: employment data has exactly one owner, and "the test harness" is not
+ * it. Fixture setup goes through a real role like everything else.
+ */
+export async function setEmploymentStatus(
+  db: Client,
+  companyId: string,
+  status: "active" | "probation" | "on_leave" | "terminated" = "active"
+): Promise<void> {
+  await runAs(
+    db,
+    companyId === COMPANY_B ? USERS.bAdmin : USERS.aAdmin,
+    (q) =>
+      q("update public.employees set employment_status = $2 where company_id = $1", [
+        companyId,
+        status,
+      ]),
+    { commit: true }
+  );
+}
+
 /** Fixture identifiers shared by the database suites. */
 export const USERS = {
   aAdmin: "aaaaaaaa-0000-0000-0000-000000000001",
