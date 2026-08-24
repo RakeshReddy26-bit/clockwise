@@ -50,6 +50,14 @@ export async function createTestDatabase(name: string): Promise<Client> {
     await db.query(readFileSync(join(MIGRATIONS_DIR, file), "utf8"));
   }
   await db.query(sqlFile("01-test-fixtures.sql"));
+
+  // 0012 makes jobs, shifts and shift_assignments undeletable for every
+  // caller, including the owner connection this helper returns. Fixture
+  // teardown between tests is exactly the deliberate maintenance the escape
+  // hatch is for, so it is set once here rather than scattered through the
+  // suites. Tests that assert the guard open their own connections, which do
+  // not inherit this.
+  await db.query("set app.allow_history_delete = 'on'");
   return db;
 }
 
@@ -67,6 +75,11 @@ export async function runAs<T>(
   await db.query("begin");
   try {
     await db.query("set local role authenticated");
+    // The connection-level maintenance flag set in createTestDatabase is for
+    // fixture teardown only. Turn it off inside every simulated request, so a
+    // test running as a real role always meets the same delete guard that
+    // production does.
+    await db.query("set local app.allow_history_delete = 'off'");
     await db.query("select set_config('request.jwt.claims', $1, true)", [
       JSON.stringify({ sub: userId, role: "authenticated" }),
     ]);

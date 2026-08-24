@@ -706,7 +706,11 @@ describe("cancel", () => {
       [USERS.aAdmin]
     );
     try {
-      expect((await cancelAs(USERS.aAdmin)).status).toBe("forbidden");
+      // Since 0012 the shift's UPDATE policy is scheduling-only, so the
+      // locking read finds nothing and HR is stopped one layer earlier than
+      // the function's own check. Either refusal is correct; what matters is
+      // that nothing is cancelled.
+      expect(["forbidden", "not_found"]).toContain((await cancelAs(USERS.aAdmin)).status);
       expect((await shift()).status).not.toBe("cancelled");
     } finally {
       await db.query(
