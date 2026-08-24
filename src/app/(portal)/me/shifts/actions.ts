@@ -186,7 +186,9 @@ export type ClockInResult =
   | { outcome: "clocked_in"; verification: ClockVerification["status"] }
   | { outcome: "outside"; distanceM: number; radiusM: number }
   | { outcome: "location_unavailable" }
-  | { outcome: "already_running" };
+  | { outcome: "already_running" }
+  /** The shift was cancelled, or the employee removed, moments ago. */
+  | { outcome: "assignment_not_active" };
 
 export const clockIn = validatedAction(
   z.object({ shiftAssignmentId: uuid }).merge(geoFixSchema),
@@ -274,7 +276,16 @@ export const clockIn = validatedAction(
       })
       .select("id")
       .single();
-    if (error || !entry) throw new Error(`clock-in failed: ${error?.message}`);
+    if (error || !entry) {
+      // guard_time_entry_assignment (0011) refuses a time entry whose
+      // assignment is no longer active. The status check above already covers
+      // the ordinary case; this fires only when a manager cancelled the shift
+      // or removed the employee between that read and this insert.
+      if (error?.message?.includes("assignment_not_active")) {
+        return { outcome: "assignment_not_active" };
+      }
+      throw new Error(`clock-in failed: ${error?.message}`);
+    }
 
     if (verification.status === "verified") {
       await logLocationEvent(ctx, employee.id, {

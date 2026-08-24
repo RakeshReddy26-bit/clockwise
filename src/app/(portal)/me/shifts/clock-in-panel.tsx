@@ -40,7 +40,10 @@ export function ClockInPanel({
   const [fix, setFix] = useState<Fix | null>(null);
   const [geoError, setGeoError] = useState(false);
   const [message, setMessage] = useState<
-    | { kind: "success" | "outside" | "unavailable" | "pending" | "error"; distanceM?: number }
+    | {
+        kind: "success" | "outside" | "unavailable" | "pending" | "error" | "inactive";
+        distanceM?: number;
+      }
     | null
   >(null);
   const [showManualForm, setShowManualForm] = useState(false);
@@ -102,6 +105,9 @@ export function ClockInPanel({
         setMessage({ kind: "outside", distanceM: data.distanceM });
       } else if (data.outcome === "location_unavailable") {
         setMessage({ kind: "unavailable" });
+      } else if (data.outcome === "assignment_not_active") {
+        setMessage({ kind: "inactive" });
+        router.refresh();
       } else {
         setMessage({ kind: "error" });
       }
@@ -214,6 +220,9 @@ export function ClockInPanel({
       )}
       {message?.kind === "pending" && (
         <p role="status" className="text-sm font-medium text-warning">{t("manualPending")}</p>
+      )}
+      {message?.kind === "inactive" && (
+        <p role="alert" className="text-sm font-medium text-destructive">{t("assignmentInactive")}</p>
       )}
       {message?.kind === "error" && (
         <p role="alert" className="text-sm text-destructive">{t("genericError")}</p>

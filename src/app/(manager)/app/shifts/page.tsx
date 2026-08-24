@@ -13,6 +13,8 @@ import { CancellationRequests } from "@/components/cancellation-requests";
 import { OfferPanel, type CandidateView } from "./offer-panel";
 import { ResponseActions } from "./response-actions";
 import { RemoveAssignment } from "./remove-assignment";
+import { CancelShift } from "./cancel-shift";
+import { buttonVariants } from "@/components/ui/button";
 
 type ResponseRow = {
   id: string;
@@ -214,11 +216,18 @@ export default async function ShiftPlanningPage({
         canDecide={roleHas(ctx.membership.role, "scheduling.manage")}
       />
 
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-xl font-semibold tracking-tight">{t("title")}</h1>
-        <p className="text-xs text-muted-foreground">
-          {t("understaffedCount", { count: understaffed.length })}
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-xs text-muted-foreground">
+            {t("understaffedCount", { count: understaffed.length })}
+          </p>
+          {canSchedule && (
+            <Link href="/app/shifts/new" className={buttonVariants({ size: "sm" })}>
+              {t("newShift")}
+            </Link>
+          )}
+        </div>
       </div>
 
       {shifts.length === 0 ? (
@@ -310,6 +319,23 @@ export default async function ShiftPlanningPage({
                 {fmtTime(selected.end_time)} · {t("seatsOpen", { count: remainingSeats })}
               </span>
             </CardTitle>
+
+            {canSchedule && (
+              <div className="flex flex-wrap items-start gap-2 pt-1">
+                <Link
+                  href={`/app/shifts/${selected.id}/edit`}
+                  className={buttonVariants({ size: "sm", variant: "outline" })}
+                >
+                  {t("editShift")}
+                </Link>
+                <CancelShift
+                  shiftId={selected.id}
+                  siteName={selectedSiteLabel}
+                  whenLabel={`${fmtDate(selected.start_time)} ${fmtTime(selected.start_time)}–${fmtTime(selected.end_time)}`}
+                  assignedCount={roster.length}
+                />
+              </div>
+            )}
           </CardHeader>
           <CardContent className="flex flex-col gap-5">
             {roster.length > 0 && (
