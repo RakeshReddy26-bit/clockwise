@@ -19,6 +19,7 @@ export default async function HomePage() {
     .maybeSingle();
 
   const quickLinks = [
+    { href: "/me/absences", label: tn("absences") },
     { href: "/me/calendar", label: tn("calendar") },
     { href: "/me/documents", label: tn("documents") },
     { href: "/me/requests", label: tn("requests") },
@@ -54,7 +55,7 @@ export default async function HomePage() {
         </>
       )}
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {quickLinks.map((l) => (
           <Link
             key={l.href}

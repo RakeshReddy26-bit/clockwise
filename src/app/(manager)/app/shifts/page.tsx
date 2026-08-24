@@ -151,6 +151,22 @@ export default async function ShiftPlanningPage({
     const inputs = await loadCandidateInputsForShift(ctx.supabase, selected);
     const ranked = rankCandidates(inputs, toShiftContext(selected));
 
+    // A PENDING holiday request covering this day. Deliberately loaded here
+    // rather than inside the eligibility engine: it is a note for the manager,
+    // never an input to `eligible`. If it went through evaluateCandidate() the
+    // next person to read that code would reasonably assume it blocks.
+    const pendingVacation = new Set<string>();
+    {
+      const { data } = await ctx.supabase
+        .from("vacation_requests")
+        .select("employee_id")
+        .eq("company_id", ctx.membership.company_id)
+        .eq("status", "pending")
+        .lte("start_date", selected.date)
+        .gte("end_date", selected.date);
+      for (const row of data ?? []) pendingVacation.add(row.employee_id as string);
+    }
+
     const offerId = openOfferBy.get(selected.id);
     const invited = new Set<string>();
     if (offerId) {
@@ -182,6 +198,7 @@ export default async function ShiftPlanningPage({
         eligible: r.eligible,
         reasons: r.reasons.map((reason) => REASON_LABELS[reason]),
         alreadyInvited: invited.has(r.employeeId),
+        pendingVacation: pendingVacation.has(r.employeeId),
       };
     });
   }

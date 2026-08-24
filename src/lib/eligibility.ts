@@ -26,8 +26,16 @@ export const OCCUPYING_ASSIGNMENT_STATUSES = [
   "cancellation_requested",
 ] as const;
 
-/** Sick-leave statuses that still block scheduling. */
-const BLOCKING_SICK_STATUSES = new Set(["reported", "confirmed"]);
+/**
+ * Sick-leave statuses that still block scheduling.
+ *
+ * Exported so absence.ts can re-export it rather than keep a second copy:
+ * reported blocks as hard as confirmed, and a drifting duplicate of that rule
+ * would make an ill employee schedulable on one screen and not another.
+ */
+export const BLOCKING_SICK_STATUSES = ["reported", "confirmed"] as const;
+
+const BLOCKING_SICK_STATUS_SET: ReadonlySet<string> = new Set(BLOCKING_SICK_STATUSES);
 
 export type IneligibleReason =
   | "not_schedulable"
@@ -177,7 +185,8 @@ export function evaluateCandidate(
 
   if (
     candidate.sickLeaves.some(
-      (s) => BLOCKING_SICK_STATUSES.has(s.status) && dateWithin(shift.date, s.startDate, s.endDate)
+      (s) =>
+        BLOCKING_SICK_STATUS_SET.has(s.status) && dateWithin(shift.date, s.startDate, s.endDate)
     )
   ) {
     reasons.push("on_sick_leave");

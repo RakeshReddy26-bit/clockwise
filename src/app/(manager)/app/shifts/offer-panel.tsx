@@ -19,6 +19,13 @@ export type CandidateView = {
   /** Message keys, resolved here — the server sends reason codes, not labels. */
   reasons: string[];
   alreadyInvited: boolean;
+  /**
+   * The employee has asked for holiday covering this shift and nobody has
+   * decided yet. Display only: a pending request must NOT make anyone
+   * ineligible, or asking for leave would be a way to opt out of being
+   * scheduled. It is here so a manager can see the collision coming.
+   */
+  pendingVacation: boolean;
 };
 
 type Props = {
@@ -145,6 +152,11 @@ export function OfferPanel({ shiftId, candidates, remainingSeats }: Props) {
                     {[candidate.position, candidate.department].filter(Boolean).join(" · ") || "—"}
                   </span>
                 </span>
+                {candidate.pendingVacation && (
+                  <Badge variant="warning" title={t("pendingVacationHint")}>
+                    {t("pendingVacationBadge")}
+                  </Badge>
+                )}
                 {candidate.alreadyInvited ? (
                   <Badge variant="secondary">{t("alreadyInvited")}</Badge>
                 ) : (
