@@ -299,6 +299,21 @@ export const approveOfferResponse = validatedAction(
       return { kind: "ineligible", reason: verdict.reasons[0] ?? "not_schedulable" };
     }
 
+    // A cancelled assignment still occupies the unique (shift_id, employee_id)
+    // key even though it occupies no seat, so approving someone who was once on
+    // this shift — removed by a manager, or released after their own request —
+    // would fail on the constraint rather than on a rule. Found while testing
+    // C.1 removal: without this the manager saw a raw database error.
+    const { data: priorAssignment } = await ctx.supabase
+      .from("shift_assignments")
+      .select("id, status")
+      .eq("shift_id", target.shift.id)
+      .eq("employee_id", target.employeeId)
+      .maybeSingle();
+    if (priorAssignment) {
+      return { kind: "ineligible", reason: "already_assigned" };
+    }
+
     const { data, error } = await ctx.supabase.rpc("approve_shift_offer", {
       p_response_id: target.responseId,
     });
@@ -493,6 +508,122 @@ export const decideCancellationRequest = validatedAction(
     return result.status === "approved"
       ? { kind: "approved", seatsOpen: result.seats_open ?? 0, employeeName }
       : { kind: "rejected", employeeName };
+  }
+);
+
+/* ------------------------------------------------------------------------- */
+/* C.1 — manager-initiated removal                                            */
+/* ------------------------------------------------------------------------- */
+
+/** Statuses remove_shift_assignment() can report. */
+export type RemovalStatus =
+  | "removed"
+  | "already_removed"
+  | "not_active"
+  | "completed"
+  | "shift_ended"
+  | "already_clocked_in"
+  | "reason_required"
+  | "forbidden"
+  | "not_found";
+
+export type RemoveAssignmentOutcome =
+  | {
+      kind: "removed";
+      employeeName: string;
+      seatsOpen: number;
+      shiftStatus: string;
+      resolvedRequest: boolean;
+    }
+  | { kind: "refused"; status: RemovalStatus };
+
+/**
+ * Take one employee off a shift.
+ *
+ * A different business event from an employee-requested cancellation, and
+ * deliberately not routed through it: nothing here creates or pretends to
+ * create a cancellation request. The durable record is the audit row the SQL
+ * function writes in the same transaction.
+ *
+ * The vacancy this opens is filled by the existing B2/B3/B4 offer workflow.
+ * There is no second replacement engine and none is wanted.
+ */
+export const removeShiftAssignment = validatedAction(
+  z.object({
+    assignmentId: uuid,
+    reason: z.string().trim().min(5).max(500),
+  }),
+  async (input): Promise<RemoveAssignmentOutcome> => {
+    const ctx = await requirePermission("scheduling.manage");
+    const companyId = ctx.membership.company_id;
+
+    const { data: assignment } = await ctx.supabase
+      .from("shift_assignments")
+      .select(
+        "id, company_id, employee_id, status, shift_id, employees(full_name), shifts(start_time, end_time, jobs(client_name, locations(name)))"
+      )
+      .eq("id", input.assignmentId)
+      .maybeSingle();
+
+    if (!assignment || assignment.company_id !== companyId) {
+      throw new AuthzError("wrong_tenant", "assignment not accessible");
+    }
+
+    const employee = assignment.employees as unknown as { full_name: string } | null;
+    const shift = assignment.shifts as unknown as {
+      start_time: string;
+      end_time: string;
+      jobs: { client_name: string; locations: { name: string } | null } | null;
+    } | null;
+
+    const { data, error } = await ctx.supabase.rpc("remove_shift_assignment", {
+      p_assignment_id: assignment.id,
+      p_reason: input.reason,
+    });
+    if (error) throw new Error(`removal failed: ${error.message}`);
+
+    const result = data as {
+      status: RemovalStatus;
+      seats_open?: number;
+      shift_status?: string;
+      resolved_request?: boolean;
+    };
+
+    if (result.status !== "removed") {
+      return { kind: "refused", status: result.status };
+    }
+
+    // Reached only on a real removal, so a retry — which comes back
+    // 'already_removed' — notifies nobody a second time.
+    //
+    // Which message is truthful depends on what preceded it: if the employee
+    // had an open request, the manager just granted it, and saying "you were
+    // removed" would misdescribe their own decision back to them.
+    await notifyDecision(ctx, {
+      employeeId: assignment.employee_id,
+      type: result.resolved_request ? "cancellation_approved" : "assignment_removed",
+      payload: {
+        shift_assignment_id: assignment.id,
+        shift_id: assignment.shift_id,
+        site_name: shift?.jobs?.locations?.name ?? shift?.jobs?.client_name ?? null,
+        start_time: shift?.start_time ?? null,
+        end_time: shift?.end_time ?? null,
+        // The reason is written by a manager about an employee and is kept in
+        // the audit record for the company. It is deliberately NOT sent to the
+        // employee's notification payload.
+      },
+    });
+
+    revalidatePath("/app/shifts");
+    revalidatePath("/app");
+
+    return {
+      kind: "removed",
+      employeeName: employee?.full_name ?? "",
+      seatsOpen: result.seats_open ?? 0,
+      shiftStatus: result.shift_status ?? "open",
+      resolvedRequest: result.resolved_request === true,
+    };
   }
 );
 

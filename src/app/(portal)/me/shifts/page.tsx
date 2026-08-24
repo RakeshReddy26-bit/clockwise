@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Term, SiteName, localizedSite } from "@/components/localized-term";
 import { OfferList } from "@/components/offer-list";
 import { OfferOutcomes } from "@/components/offer-outcomes";
+import { RemovalNotices } from "@/components/removal-notices";
 import { ClockInPanel } from "./clock-in-panel";
 import { CancelPanel } from "./cancel-panel";
 
@@ -131,6 +132,12 @@ export default async function MyShiftsPage() {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-xl font-semibold tracking-tight">{t("title")}</h1>
+
+      <RemovalNotices
+        supabase={ctx.supabase}
+        profileId={ctx.userId}
+        companyId={ctx.membership.company_id}
+      />
 
       <OfferOutcomes
         supabase={ctx.supabase}

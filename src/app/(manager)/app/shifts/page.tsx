@@ -3,7 +3,7 @@ import { getTranslations, getLocale } from "next-intl/server";
 import { getShellContext } from "@/lib/shell-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Term, SiteName } from "@/components/localized-term";
+import { Term, SiteName, localizedSite } from "@/components/localized-term";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { cn } from "@/lib/utils";
 import { loadCandidateInputsForShift, toShiftContext, type ShiftRow } from "@/lib/candidates";
@@ -12,6 +12,7 @@ import { roleHas } from "@/lib/permissions";
 import { CancellationRequests } from "@/components/cancellation-requests";
 import { OfferPanel, type CandidateView } from "./offer-panel";
 import { ResponseActions } from "./response-actions";
+import { RemoveAssignment } from "./remove-assignment";
 
 type ResponseRow = {
   id: string;
@@ -51,6 +52,12 @@ const REASON_LABELS: Record<IneligibleReason, string> = {
   already_assigned: "reasonAlreadyAssigned",
 };
 
+type RosterRow = {
+  id: string;
+  status: string;
+  employees: { full_name: string; employee_no: string } | null;
+};
+
 type ShiftListRow = ShiftRow & {
   status: string;
   required_count: number;
@@ -64,7 +71,12 @@ export default async function ShiftPlanningPage({
 }) {
   const ctx = await getShellContext();
   const t = await getTranslations("planning");
+  const tc = await getTranslations("cancellation");
   const locale = await getLocale();
+  // UX alignment only. removeShiftAssignment() requires the same permission and
+  // remove_shift_assignment() re-checks app.is_staff(); hiding a control is
+  // never what makes an action safe.
+  const canSchedule = roleHas(ctx.membership.role, "scheduling.manage");
   const { shift: selectedShiftId } = await searchParams;
 
   const { data: shiftRows } = await ctx.supabase
@@ -110,14 +122,30 @@ export default async function ShiftPlanningPage({
     (s) => (occupiedBy.get(s.id) ?? 0) < s.required_count
   );
 
-  const selected = understaffed.find((s) => s.id === selectedShiftId) ?? null;
+  // Selectable from the whole upcoming list, not only the understaffed part:
+  // taking someone off a shift is something a scheduler does to a shift that
+  // is currently FULL, and a list that hid those made the action unreachable
+  // exactly when it was needed.
+  const selected = shifts.find((s) => s.id === selectedShiftId) ?? null;
 
   // Candidates only for the selected shift.
   let candidates: CandidateView[] = [];
   let responses: ResponseRow[] = [];
+  let roster: RosterRow[] = [];
   let remainingSeats = 0;
   if (selected) {
     remainingSeats = selected.required_count - (occupiedBy.get(selected.id) ?? 0);
+
+    // Who is actually on this shift right now. Only occupying statuses: a
+    // cancelled assignment is history and has no seat to give back.
+    const { data: rosterRows } = await ctx.supabase
+      .from("shift_assignments")
+      .select("id, status, employees(full_name, employee_no)")
+      .eq("shift_id", selected.id)
+      .in("status", [...OCCUPYING_ASSIGNMENT_STATUSES])
+      .order("created_at", { ascending: true });
+    roster = (rosterRows ?? []) as unknown as RosterRow[];
+
     const inputs = await loadCandidateInputsForShift(ctx.supabase, selected);
     const ranked = rankCandidates(inputs, toShiftContext(selected));
 
@@ -156,6 +184,12 @@ export default async function ShiftPlanningPage({
     });
   }
 
+  // Identity, localized only where it is one of the known demo sites.
+  const selectedSiteLabel = selected
+    ? (await localizedSite(selected.jobs?.locations?.name ?? null)) ||
+      (selected.jobs?.client_name ?? "—")
+    : "—";
+
   const fmtDate = (iso: string) =>
     new Date(iso).toLocaleDateString(locale, { weekday: "short", day: "2-digit", month: "2-digit" });
   const fmtTime = (iso: string) =>
@@ -187,9 +221,9 @@ export default async function ShiftPlanningPage({
         </p>
       </div>
 
-      {understaffed.length === 0 ? (
+      {shifts.length === 0 ? (
         <div className="rounded-lg border border-dashed bg-card p-8 text-center text-sm text-muted-foreground">
-          {t("allStaffed")}
+          {t("noUpcoming")}
         </div>
       ) : (
         <div className="overflow-x-auto rounded-lg border bg-card">
@@ -206,7 +240,7 @@ export default async function ShiftPlanningPage({
               </tr>
             </thead>
             <tbody>
-              {understaffed.map((s) => {
+              {shifts.map((s) => {
                 const filled = occupiedBy.get(s.id) ?? 0;
                 const open = s.required_count - filled;
                 const isSelected = s.id === selected?.id;
@@ -248,8 +282,10 @@ export default async function ShiftPlanningPage({
                     <td className="px-3 py-2">
                       {openOfferBy.has(s.id) ? (
                         <Badge variant="warning">{t("offerPending")}</Badge>
-                      ) : (
+                      ) : open > 0 ? (
                         <Badge variant="destructive">{t("statusUnderstaffed")}</Badge>
+                      ) : (
+                        <Badge variant="success">{t("statusStaffed")}</Badge>
                       )}
                     </td>
                   </tr>
@@ -276,6 +312,41 @@ export default async function ShiftPlanningPage({
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-5">
+            {roster.length > 0 && (
+              <section className="flex flex-col gap-2">
+                <h3 className="text-sm font-semibold">{t("rosterTitle")}</h3>
+                <ul className="flex flex-col gap-1">
+                  {roster.map((row) => (
+                    <li
+                      key={row.id}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-2 text-sm"
+                    >
+                      <span className="min-w-0">
+                        <span className="font-medium">{row.employees?.full_name ?? "—"}</span>{" "}
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                          {row.employees?.employee_no ?? ""}
+                        </span>
+                        {row.status === "cancellation_requested" && (
+                          <Badge variant="warning" className="ml-2">
+                            {tc("badge")}
+                          </Badge>
+                        )}
+                      </span>
+
+                      {canSchedule && (
+                        <RemoveAssignment
+                          assignmentId={row.id}
+                          employeeName={row.employees?.full_name ?? ""}
+                          siteName={selectedSiteLabel}
+                          whenLabel={`${fmtDate(selected.start_time)} ${fmtTime(selected.start_time)}–${fmtTime(selected.end_time)}`}
+                        />
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
             {responses.length > 0 && (
               <section className="flex flex-col gap-2">
                 <h3 className="text-sm font-semibold">{t("responses")}</h3>

@@ -242,7 +242,27 @@
     "refusedCancellation_forbidden": "You do not have permission for that.",
     "refusedCancellation_not_found": "The request could not be found.",
     "cancellationsReadOnly": "For information only — scheduling decides these.",
-    "cancellationPendingBadge": "Awaiting decision"
+    "cancellationPendingBadge": "Awaiting decision",
+    "statusStaffed": "Staffed",
+    "noUpcoming": "No upcoming shifts.",
+    "rosterTitle": "On this shift",
+    "removeFromShift": "Remove from shift",
+    "removeConfirm": "Remove <strong>{name}</strong> from <strong>{site}</strong> on <strong>{when}</strong>?",
+    "removeReasonLabel": "Reason",
+    "removeReasonHint": "e.g. unreachable, client request, assigned by mistake",
+    "removeReasonPrivacy": "The reason is recorded in the audit log and is not sent to the employee.",
+    "removeConfirmAction": "Remove from shift",
+    "cancelAction": "Cancel",
+    "removedVacancy": "{name} was removed. {count, plural, one {# staffing position is now open.} other {# staffing positions are now open.}}",
+    "removedStillStaffed": "{name} was removed. The shift is still fully staffed.",
+    "refusedRemoval_already_removed": "This assignment has already been removed.",
+    "refusedRemoval_not_active": "This assignment is no longer active.",
+    "refusedRemoval_completed": "This shift has already been worked.",
+    "refusedRemoval_shift_ended": "This shift has already ended.",
+    "refusedRemoval_already_clocked_in": "Time has already been recorded against this assignment. Use a time correction instead.",
+    "refusedRemoval_reason_required": "Please give a reason.",
+    "refusedRemoval_forbidden": "You do not have permission for that.",
+    "refusedRemoval_not_found": "The assignment could not be found."
   },
   "myShifts": {
     "title": "My shifts",
@@ -341,5 +361,10 @@
     "submittedOn": "Submitted {when}",
     "decidedOn": "Decided {when}",
     "stillAssigned": "You stay assigned until it is decided."
+  },
+  "removal": {
+    "sectionTitle": "Changes to your schedule",
+    "title": "You were taken off this shift.",
+    "body": "Please contact dispatch if you have questions."
   }
 }

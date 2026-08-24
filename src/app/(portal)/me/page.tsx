@@ -4,6 +4,7 @@ import { getShellContext } from "@/lib/shell-context";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { OfferList } from "@/components/offer-list";
 import { OfferOutcomes } from "@/components/offer-outcomes";
+import { RemovalNotices } from "@/components/removal-notices";
 
 export default async function HomePage() {
   const ctx = await getShellContext();
@@ -35,6 +36,11 @@ export default async function HomePage() {
       {employee && (
         <>
           {/* Outcome first: it answers "what happened?" before "what's new?" */}
+          <RemovalNotices
+            supabase={ctx.supabase}
+            profileId={ctx.userId}
+            companyId={ctx.membership.company_id}
+          />
           <OfferOutcomes
             supabase={ctx.supabase}
             employeeId={employee.id}

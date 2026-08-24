@@ -242,7 +242,27 @@
     "refusedCancellation_forbidden": "Dafür fehlt Ihnen die Berechtigung.",
     "refusedCancellation_not_found": "Der Antrag wurde nicht gefunden.",
     "cancellationsReadOnly": "Nur zur Information — entschieden wird von der Einsatzplanung.",
-    "cancellationPendingBadge": "Entscheidung ausstehend"
+    "cancellationPendingBadge": "Entscheidung ausstehend",
+    "statusStaffed": "Besetzt",
+    "noUpcoming": "Keine anstehenden Schichten.",
+    "rosterTitle": "Eingeteilt",
+    "removeFromShift": "Ausplanen",
+    "removeConfirm": "<strong>{name}</strong> von <strong>{site}</strong> am <strong>{when}</strong> ausplanen?",
+    "removeReasonLabel": "Grund",
+    "removeReasonHint": "z. B. nicht erreichbar, Kundenwunsch, versehentlich eingeteilt",
+    "removeReasonPrivacy": "Der Grund wird protokolliert und nicht an die Mitarbeiterin oder den Mitarbeiter gesendet.",
+    "removeConfirmAction": "Jetzt ausplanen",
+    "cancelAction": "Abbrechen",
+    "removedVacancy": "{name} wurde ausgeplant. {count, plural, one {# Platz ist jetzt frei.} other {# Plätze sind jetzt frei.}}",
+    "removedStillStaffed": "{name} wurde ausgeplant. Die Schicht bleibt voll besetzt.",
+    "refusedRemoval_already_removed": "Diese Zuweisung wurde bereits aufgehoben.",
+    "refusedRemoval_not_active": "Diese Zuweisung ist nicht mehr aktiv.",
+    "refusedRemoval_completed": "Diese Schicht wurde bereits geleistet.",
+    "refusedRemoval_shift_ended": "Diese Schicht ist bereits beendet.",
+    "refusedRemoval_already_clocked_in": "Es liegen bereits Zeiterfassungen vor. Bitte über die Zeitkorrektur bearbeiten.",
+    "refusedRemoval_reason_required": "Bitte geben Sie einen Grund an.",
+    "refusedRemoval_forbidden": "Dafür fehlt Ihnen die Berechtigung.",
+    "refusedRemoval_not_found": "Die Zuweisung wurde nicht gefunden."
   },
   "myShifts": {
     "title": "Meine Schichten",
@@ -341,5 +361,10 @@
     "submittedOn": "Gestellt am {when}",
     "decidedOn": "Entschieden am {when}",
     "stillAssigned": "Bis zur Entscheidung bleiben Sie eingeteilt."
+  },
+  "removal": {
+    "sectionTitle": "Änderungen an Ihrer Planung",
+    "title": "Sie wurden aus dieser Schicht ausgeplant.",
+    "body": "Bei Fragen wenden Sie sich bitte an die Einsatzleitung."
   }
 }
