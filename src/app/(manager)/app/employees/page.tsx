@@ -7,6 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { SiteName } from "@/components/localized-term";
 import { OCCUPYING_ASSIGNMENT_STATUSES } from "@/lib/eligibility";
 import { accountState, expiresSoon, countsForDate } from "@/lib/employee";
+import { EmptyState } from "@/components/empty-state";
 import { EmployeeFilters } from "./employee-filters";
 
 /**
@@ -146,9 +147,11 @@ export default async function EmployeesPage({
       <EmployeeFilters status={params.status ?? "all"} q={params.q ?? ""} />
 
       {employees.length === 0 ? (
-        <div className="rounded-lg border border-dashed bg-card p-8 text-center text-sm text-muted-foreground">
-          {t("none")}
-        </div>
+        <EmptyState
+          title={t("none")}
+          body={canManage ? t("noneBody") : undefined}
+          action={canManage ? { href: "/app/employees/new", label: t("newEmployee") } : undefined}
+        />
       ) : (
         <div className="overflow-x-auto rounded-lg border bg-card">
           <table className="w-full min-w-[52rem] text-sm">

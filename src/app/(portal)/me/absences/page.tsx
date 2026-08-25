@@ -1,6 +1,7 @@
 import { getTranslations, getLocale } from "next-intl/server";
 import { getShellContext } from "@/lib/shell-context";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/empty-state";
 import { VacationForm, SickForm, WithdrawButton } from "./absence-forms";
 
 /**
@@ -97,9 +98,7 @@ export default async function AbsencesPage() {
       </div>
 
       {!employee ? (
-        <div className="rounded-lg border border-dashed bg-card p-8 text-center text-sm text-muted-foreground">
-          {t("noEmployeeRecord")}
-        </div>
+        <EmptyState title={t("noEmployeeRecord")} />
       ) : (
         <>
           <VacationForm />

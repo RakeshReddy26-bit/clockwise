@@ -6,6 +6,7 @@ import {
   Home,
   CalendarClock,
   Timer,
+  Palmtree,
   MessageSquare,
   User,
   type LucideIcon,
@@ -18,6 +19,7 @@ const ICONS: Record<string, LucideIcon> = {
   home: Home,
   shifts: CalendarClock,
   time: Timer,
+  absences: Palmtree,
   messages: MessageSquare,
   profile: User,
 };

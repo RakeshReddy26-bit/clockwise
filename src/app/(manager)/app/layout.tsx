@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { getShellContext, brandingStyle } from "@/lib/shell-context";
 import { isManagerRole } from "@/lib/permissions";
-import { ManagerNav, type NavItem } from "@/components/manager-nav";
+import { ManagerNav, ManagerNavBar, type NavItem, type NavGroup } from "@/components/manager-nav";
 import { LanguageToggle } from "@/components/language-toggle";
 import { RoleLabel } from "@/components/localized-term";
 import { Avatar } from "@/components/ui/avatar";
@@ -21,19 +21,30 @@ export default async function ManagerLayout({
   const t = await getTranslations("managerNav");
   const tc = await getTranslations("common");
 
-  const items: NavItem[] = [
+  // The daily-operations set is what the product actually does today. The rest
+  // is grouped and dimmed rather than hidden: a manager should be able to see
+  // where the product is going without clicking into a dead end mid-demo.
+  const operational: NavItem[] = [
     { href: "/app", label: t("dashboard"), icon: "dashboard" },
-    { href: "/app/employees", label: t("employees"), icon: "employees" },
-    { href: "/app/recruitment", label: t("recruitment"), icon: "recruitment" },
-    { href: "/app/jobs", label: t("jobs"), icon: "jobs" },
     { href: "/app/shifts", label: t("shifts"), icon: "shifts" },
-    { href: "/app/time", label: t("time"), icon: "time" },
+    { href: "/app/employees", label: t("employees"), icon: "employees" },
     { href: "/app/absences", label: t("absences"), icon: "absences" },
+    { href: "/app/time", label: t("time"), icon: "time" },
+  ];
+
+  const planned: NavItem[] = [
+    { href: "/app/jobs", label: t("jobs"), icon: "jobs" },
     { href: "/app/calendar", label: t("calendar"), icon: "calendar" },
-    { href: "/app/news", label: t("news"), icon: "news" },
-    { href: "/app/messages", label: t("messages"), icon: "messages" },
+    { href: "/app/recruitment", label: t("recruitment"), icon: "recruitment" },
     { href: "/app/documents", label: t("documents"), icon: "documents" },
+    { href: "/app/messages", label: t("messages"), icon: "messages" },
+    { href: "/app/news", label: t("news"), icon: "news" },
     { href: "/app/settings", label: t("settings"), icon: "settings" },
+  ];
+
+  const groups: NavGroup[] = [
+    { label: t("groupOperations"), items: operational },
+    { label: t("groupPlanned"), items: planned, planned: true },
   ];
 
   return (
@@ -51,7 +62,7 @@ export default async function ManagerLayout({
           </span>
         </div>
         <div className="flex-1 overflow-y-auto">
-          <ManagerNav items={items} />
+          <ManagerNav groups={groups} />
         </div>
         <div className="mt-3 flex items-center justify-between gap-2 border-t pt-3">
           <div className="flex min-w-0 items-center gap-2">
@@ -92,9 +103,11 @@ export default async function ManagerLayout({
             </form>
           </div>
         </header>
-        <nav className="flex gap-1 overflow-x-auto border-b bg-card px-2 py-1.5 md:hidden">
-          <ManagerNav items={items} />
-        </nav>
+        {/* Mobile shows only what works today — a scrolling strip of planned
+            areas would be noise on a phone. */}
+        <div className="overflow-x-auto border-b bg-card px-2 py-1.5 md:hidden">
+          <ManagerNavBar items={operational} />
+        </div>
         <main className="mx-auto w-full max-w-6xl flex-1 p-4 md:p-6">{children}</main>
       </div>
     </div>

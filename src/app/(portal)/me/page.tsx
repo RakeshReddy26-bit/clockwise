@@ -18,11 +18,12 @@ export default async function HomePage() {
     .eq("profile_id", ctx.userId)
     .maybeSingle();
 
+  // Everything the bottom bar has no room for stays one tap away here.
   const quickLinks = [
-    { href: "/me/absences", label: tn("absences") },
+    { href: "/me/requests", label: tn("requests") },
     { href: "/me/calendar", label: tn("calendar") },
     { href: "/me/documents", label: tn("documents") },
-    { href: "/me/requests", label: tn("requests") },
+    { href: "/me/messages", label: tn("messages") },
   ];
 
   return (

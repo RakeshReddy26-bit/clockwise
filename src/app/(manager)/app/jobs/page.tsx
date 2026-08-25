@@ -3,5 +3,6 @@ import { ComingSoon } from "@/components/coming-soon";
 
 export default async function Page() {
   const t = await getTranslations("managerNav");
-  return <ComingSoon title={t("jobs")} />;
+  const tp = await getTranslations("planned");
+  return <ComingSoon title={t("jobs")} note={tp("jobs")} backHref="/app" />;
 }

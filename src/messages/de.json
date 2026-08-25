@@ -8,7 +8,12 @@
     "comingSoon": "Dieser Bereich wird in der nächsten Phase freigeschaltet.",
     "comingSoonTitle": "Bald verfügbar",
     "loading": "Wird geladen …",
-    "error": "Etwas ist schiefgelaufen. Bitte erneut versuchen."
+    "error": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
+    "backToOverview": "Zurück zur Übersicht",
+    "errorTitle": "Da ist etwas schiefgelaufen",
+    "retry": "Erneut versuchen",
+    "notFoundTitle": "Nicht gefunden",
+    "notFound": "Dieser Eintrag existiert nicht oder gehört zu einem anderen Unternehmen."
   },
   "auth": {
     "title": "Anmelden",
@@ -31,7 +36,9 @@
     "news": "Neuigkeiten",
     "messages": "Nachrichten",
     "documents": "Dokumente",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "groupOperations": "Tagesgeschäft",
+    "groupPlanned": "In Entwicklung"
   },
   "employeeNav": {
     "home": "Start",
@@ -605,7 +612,8 @@
     "refusedStatus_forbidden": "Dafür fehlt Ihnen die Berechtigung.",
     "refusedStatus_not_found": "Der Mitarbeiter ist nicht mehr vorhanden.",
     "errorGeneric": "Das hat nicht geklappt. Bitte erneut versuchen.",
-    "sectionAccount": "Zugang"
+    "sectionAccount": "Zugang",
+    "noneBody": "Legen Sie Ihren ersten Mitarbeiter an, um mit der Planung zu beginnen."
   },
   "profile": {
     "title": "Profil",
@@ -712,5 +720,28 @@
     "absenceBody": "Urlaub beantragen und Krankmeldungen erfassen.",
     "start": "Loslegen",
     "completeProfile": "Telefonnummer und Verfügbarkeit ergänzen"
+  },
+  "planned": {
+    "jobs": "Aufträge und Einsatzorte werden hier verwaltet. Heute werden Aufträge über die Schichtplanung angelegt.",
+    "calendar": "Monats- und Wochenansicht der gesamten Einsatzplanung.",
+    "recruitment": "Bewerbungen erfassen und Bewerber in Mitarbeiter überführen.",
+    "documents": "Verträge, Bescheinigungen und Nachweise zentral ablegen.",
+    "messages": "Direkte Kommunikation zwischen Einsatzleitung und Mitarbeitern.",
+    "news": "Unternehmensweite Mitteilungen an die Belegschaft.",
+    "settings": "Unternehmensdaten, Branding, Geofence-Regeln und Benachrichtigungen.",
+    "meCalendar": "Ihre Einsätze in der Monatsübersicht.",
+    "meDocuments": "Ihre Verträge und Bescheinigungen.",
+    "meMessages": "Nachrichten von der Einsatzleitung."
+  },
+  "myTime": {
+    "title": "Arbeitszeit",
+    "intro": "Ihre erfassten Zeiten der letzten Einsätze.",
+    "noneTitle": "Noch keine Zeiten erfasst",
+    "noneBody": "Sobald Sie sich an einem Einsatzort anmelden, erscheinen Ihre Zeiten hier.",
+    "toShifts": "Zu meinen Schichten",
+    "recordedTotal": "Erfasst gesamt",
+    "noSite": "Ohne Einsatzort",
+    "running": "Läuft",
+    "outsideSite": "Außerhalb des Einsatzorts"
   }
 }

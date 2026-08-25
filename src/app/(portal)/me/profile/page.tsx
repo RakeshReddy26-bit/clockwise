@@ -2,6 +2,7 @@ import { getTranslations, getLocale } from "next-intl/server";
 import { getShellContext } from "@/lib/shell-context";
 import { Badge } from "@/components/ui/badge";
 import { SiteName } from "@/components/localized-term";
+import { EmptyState } from "@/components/empty-state";
 import {
   ContactForm,
   AccountForm,
@@ -108,9 +109,7 @@ export default async function ProfilePage() {
       </section>
 
       {!employee ? (
-        <div className="rounded-lg border border-dashed bg-card p-8 text-center text-sm text-muted-foreground">
-          {t("noEmployeeRecord")}
-        </div>
+        <EmptyState title={t("noEmployeeRecord")} />
       ) : (
         <>
           <section className="flex flex-col gap-3 rounded-lg border bg-card p-3">

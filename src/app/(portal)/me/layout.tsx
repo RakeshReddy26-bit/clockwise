@@ -15,11 +15,14 @@ export default async function PortalLayout({
   const t = await getTranslations("employeeNav");
   const tc = await getTranslations("common");
 
+  // Five slots on a phone, so they go to what an employee actually opens during
+  // a working week. Messages is a planned area and would spend a slot on a dead
+  // end; it stays reachable from the home screen's quick links.
   const items: PortalNavItem[] = [
     { href: "/me", label: t("home"), icon: "home" },
     { href: "/me/shifts", label: t("shifts"), icon: "shifts" },
     { href: "/me/time", label: t("time"), icon: "time" },
-    { href: "/me/messages", label: t("messages"), icon: "messages" },
+    { href: "/me/absences", label: t("absences"), icon: "absences" },
     { href: "/me/profile", label: t("profile"), icon: "profile" },
   ];
 

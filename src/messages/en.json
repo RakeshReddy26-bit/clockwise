@@ -8,7 +8,12 @@
     "comingSoon": "This area unlocks in the next phase.",
     "comingSoonTitle": "Coming soon",
     "loading": "Loading …",
-    "error": "Something went wrong. Please try again."
+    "error": "Something went wrong. Please try again.",
+    "backToOverview": "Back to overview",
+    "errorTitle": "Something went wrong",
+    "retry": "Try again",
+    "notFoundTitle": "Not found",
+    "notFound": "This record does not exist, or belongs to another company."
   },
   "auth": {
     "title": "Sign in",
@@ -31,7 +36,9 @@
     "news": "News",
     "messages": "Messages",
     "documents": "Documents",
-    "settings": "Settings"
+    "settings": "Settings",
+    "groupOperations": "Daily operations",
+    "groupPlanned": "In development"
   },
   "employeeNav": {
     "home": "Home",
@@ -605,7 +612,8 @@
     "refusedStatus_forbidden": "You do not have permission to do that.",
     "refusedStatus_not_found": "That employee no longer exists.",
     "errorGeneric": "That did not work. Please try again.",
-    "sectionAccount": "Account"
+    "sectionAccount": "Account",
+    "noneBody": "Add your first employee to start scheduling."
   },
   "profile": {
     "title": "Profile",
@@ -712,5 +720,28 @@
     "absenceBody": "Request holiday and report sickness.",
     "start": "Get started",
     "completeProfile": "Add your phone number and availability"
+  },
+  "planned": {
+    "jobs": "Clients and sites are managed here. Today, jobs are created through shift planning.",
+    "calendar": "Month and week view of the whole schedule.",
+    "recruitment": "Track applicants and turn them into employees.",
+    "documents": "Contracts, certificates and records in one place.",
+    "messages": "Direct messaging between dispatch and employees.",
+    "news": "Company-wide announcements to the workforce.",
+    "settings": "Company details, branding, geofence rules and notifications.",
+    "meCalendar": "Your shifts in a monthly view.",
+    "meDocuments": "Your contracts and certificates.",
+    "meMessages": "Messages from dispatch."
+  },
+  "myTime": {
+    "title": "Working time",
+    "intro": "Your recorded time from recent shifts.",
+    "noneTitle": "No time recorded yet",
+    "noneBody": "Once you clock in at a site, your hours appear here.",
+    "toShifts": "Go to my shifts",
+    "recordedTotal": "Recorded in total",
+    "noSite": "No site",
+    "running": "Running",
+    "outsideSite": "Outside the site"
   }
 }

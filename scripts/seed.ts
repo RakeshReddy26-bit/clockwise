@@ -129,8 +129,16 @@ async function main() {
   for (let i = 0; i < EMPLOYEES.length; i++) {
     const name = EMPLOYEES[i];
     const slug = name.toLowerCase().replace(/[^a-z]+/g, ".").replace(/^\.|\.$/g, "");
-    const uid = await createUser(name, slug);
-    await insert("company_memberships", { profile_id: uid, company_id: cid, role: "EMPLOYEE" });
+
+    // The last three are deliberately left WITHOUT an account: no auth user, no
+    // membership, profile_id null. That is a legal state the schema has always
+    // allowed, and it is the only way the invitation flow can be demonstrated —
+    // with everyone pre-linked there is nobody left to invite.
+    const withoutAccount = i >= EMPLOYEES.length - 3;
+    const uid = withoutAccount ? null : await createUser(name, slug);
+    if (uid) {
+      await insert("company_memberships", { profile_id: uid, company_id: cid, role: "EMPLOYEE" });
+    }
 
     const dept = departments[i % 3];
     const deptName = DEPARTMENTS[i % 3];
@@ -153,7 +161,9 @@ async function main() {
       vacation_days_used: (i * 3) % 15,
       hourly_rate: 14 + (i % 6),
     });
-    employeeIds.push(emp.id);
+    // Only accounted employees are used for assignments below, so an
+    // uninvited person never appears mid-shift with no way to clock in.
+    if (!withoutAccount) employeeIds.push(emp.id);
 
     await insert("emergency_contacts", {
       company_id: cid,
