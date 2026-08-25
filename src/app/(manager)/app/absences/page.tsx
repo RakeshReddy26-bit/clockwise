@@ -4,7 +4,11 @@ import { roleHas } from "@/lib/permissions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { OCCUPYING_ASSIGNMENT_STATUSES } from "@/lib/eligibility";
+import { orderAbsenceQueue, countDecidable } from "@/lib/absence-queue";
 import { VacationDecision, SickDecision } from "./absence-decisions";
+
+/** Sick-leave states that still need a manager to act. */
+const DECIDABLE_SICK_STATUSES = ["reported"] as const;
 
 /**
  * Absences for the tenant.
@@ -58,14 +62,55 @@ export default async function AbsencesPage() {
   const canDecide = roleHas(ctx.membership.role, "absence.decide");
   const companyId = ctx.membership.company_id;
 
-  const [{ data: vacationRows }, { data: sickRows }] = await Promise.all([
+  const today = new Date().toISOString().slice(0, 10);
+
+  /*
+   * One query per state, each with its own LIMIT.
+   *
+   * These used to share a window: pending and approved were fetched together,
+   * ordered by start_date ascending, capped at 50. Approved holidays from any
+   * point in the past sort first, so with enough history a genuinely pending
+   * request fell outside the window and this page rendered "no pending
+   * requests" while requests were waiting. A decision queue reporting zero is
+   * worse than a slow one.
+   *
+   * Separate queries make that structurally impossible: a decided row cannot
+   * consume a slot a pending row needed. The decided lists additionally carry
+   * a date floor, because a holiday that already ended is history, not
+   * something dispatch plans around.
+   */
+  const [
+    { data: pendingRows },
+    { data: approvedRows },
+    { data: reportedRows },
+    { data: confirmedRows },
+  ] = await Promise.all([
     ctx.supabase
       .from("vacation_requests")
       .select(
         "id, employee_id, start_date, end_date, days_count, note, status, created_at, employees(full_name, employee_no)"
       )
       .eq("company_id", companyId)
-      .in("status", ["pending", "approved"])
+      .eq("status", "pending")
+      .order("start_date", { ascending: true })
+      .limit(50),
+    ctx.supabase
+      .from("vacation_requests")
+      .select(
+        "id, employee_id, start_date, end_date, days_count, note, status, created_at, employees(full_name, employee_no)"
+      )
+      .eq("company_id", companyId)
+      .eq("status", "approved")
+      .gte("end_date", today)
+      .order("start_date", { ascending: true })
+      .limit(25),
+    ctx.supabase
+      .from("sick_leaves")
+      .select(
+        "id, employee_id, start_date, expected_end_date, status, employees(full_name, employee_no)"
+      )
+      .eq("company_id", companyId)
+      .eq("status", "reported")
       .order("start_date", { ascending: true })
       .limit(50),
     ctx.supabase
@@ -74,13 +119,24 @@ export default async function AbsencesPage() {
         "id, employee_id, start_date, expected_end_date, status, employees(full_name, employee_no)"
       )
       .eq("company_id", companyId)
-      .in("status", ["reported", "confirmed"])
+      .eq("status", "confirmed")
       .order("start_date", { ascending: false })
-      .limit(50),
+      .limit(25),
   ]);
 
-  const vacations = (vacationRows ?? []) as unknown as VacationRow[];
-  const sickLeaves = (sickRows ?? []) as unknown as SickRow[];
+  const pending = (pendingRows ?? []) as unknown as VacationRow[];
+  const approved = (approvedRows ?? []) as unknown as VacationRow[];
+  const vacations = [...pending, ...approved];
+  // Reported leaves still need a decision, so they lead; confirmed ones stay
+  // visible behind them because dispatch still has to plan around them.
+  const sickLeaves = orderAbsenceQueue(
+    [
+      ...((reportedRows ?? []) as unknown as SickRow[]),
+      ...((confirmedRows ?? []) as unknown as SickRow[]),
+    ],
+    DECIDABLE_SICK_STATUSES
+  );
+  const openSickCount = countDecidable(sickLeaves, DECIDABLE_SICK_STATUSES);
 
   // One query for every live assignment of everyone who appears on this page,
   // then matched in memory. The alternative — a query per row — is the same
@@ -116,9 +172,6 @@ export default async function AbsencesPage() {
 
   const range = (start: string, end: string | null) =>
     end && end !== start ? `${fmtDate(start)} – ${fmtDate(end)}` : fmtDate(start);
-
-  const pending = vacations.filter((row) => row.status === "pending");
-  const approved = vacations.filter((row) => row.status === "approved");
 
   return (
     <div className="flex flex-col gap-4">
@@ -193,7 +246,7 @@ export default async function AbsencesPage() {
           <CardTitle className="text-base">
             {t("openSickLeave")}{" "}
             <span className="font-normal text-muted-foreground tabular-nums">
-              ({sickLeaves.length})
+              ({openSickCount})
             </span>
           </CardTitle>
         </CardHeader>

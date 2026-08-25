@@ -1,5 +1,4 @@
 import { getTranslations } from "next-intl/server";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -11,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { LanguageToggle } from "@/components/language-toggle";
 import { login } from "./actions";
+import { LoginSubmit } from "./submit-button";
 
 /** Query-string error codes this page knows how to explain. */
 const ERROR_KEYS: Record<string, string> = {
@@ -74,7 +74,7 @@ export default async function LoginPage({
                 {t(ERROR_KEYS[error])}
               </p>
             )}
-            <Button type="submit">{t("submit")}</Button>
+            <LoginSubmit label={t("submit")} pendingLabel={t("submitPending")} />
           </form>
         </CardContent>
       </Card>

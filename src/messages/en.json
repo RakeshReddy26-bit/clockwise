@@ -5,8 +5,8 @@
     "language": "Language",
     "german": "German",
     "english": "English",
-    "comingSoon": "This area unlocks in the next phase.",
-    "comingSoonTitle": "Coming soon",
+    "comingSoon": "This area is not part of this version.",
+    "comingSoonTitle": "Planned",
     "loading": "Loading …",
     "error": "Something went wrong. Please try again.",
     "backToOverview": "Back to overview",
@@ -23,7 +23,8 @@
     "submit": "Sign in",
     "invalidCredentials": "Email or password is incorrect.",
     "noMembership": "Your account is not linked to any company. Please contact your administration.",
-    "invalidLink": "This invitation link is no longer valid. Please ask for a new invitation."
+    "invalidLink": "This invitation link is no longer valid. Please ask for a new invitation.",
+    "submitPending": "Signing in …"
   },
   "managerNav": {
     "dashboard": "Dashboard",
@@ -39,7 +40,7 @@
     "documents": "Documents",
     "settings": "Settings",
     "groupOperations": "Daily operations",
-    "groupPlanned": "In development"
+    "groupPlanned": "Planned"
   },
   "employeeNav": {
     "home": "Home",
@@ -52,15 +53,13 @@
     "profile": "Profile",
     "absences": "Absences"
   },
-  "dashboard": {
-    "title": "Dashboard",
-    "welcome": "Welcome back, {name}",
-    "foundationNote": "Foundation is in place. Metrics and activity arrive in Phase 1B."
-  },
   "home": {
     "title": "Home",
     "welcome": "Hello, {name}",
-    "foundationNote": "Your shifts, working time and absences — all in one place."
+    "foundationNote": "Your shifts, working time and absences — all in one place.",
+    "openOffers": "{count, plural, one {# shift offer is waiting for your answer} other {# shift offers are waiting for your answer}}",
+    "openOffersAction": "Answer",
+    "plannedTag": "Planned"
   },
   "terms": {
     "building_services": "Building Services",
@@ -747,9 +746,22 @@
     "noneTitle": "No time recorded yet",
     "noneBody": "Once you clock in at a site, your hours appear here.",
     "toShifts": "Go to my shifts",
-    "recordedTotal": "Recorded in total",
+    "recordedTotal": "Total — last {count} entries",
     "noSite": "No site",
     "running": "Running",
-    "outsideSite": "Outside the site"
+    "outsideSite": "Outside the site",
+    "onBreak": "On break"
+  },
+  "nextShift": {
+    "title": "Next shift",
+    "state_on_duty": "Clocked in",
+    "state_in_progress": "Started",
+    "state_upcoming": "Upcoming",
+    "day_today": "Today",
+    "day_tomorrow": "Tomorrow",
+    "ctaOnDuty": "Open shift and clock out",
+    "ctaOpen": "Open shift details",
+    "noneTitle": "No upcoming shift",
+    "noneBody": "New shift offers appear under My shifts."
   }
 }

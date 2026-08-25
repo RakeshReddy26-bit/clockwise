@@ -245,7 +245,10 @@ export default async function EmployeeDetailPage({
               <li key={q.id}>
                 {q.name}
                 <span className="ml-2 text-muted-foreground tabular-nums">
-                  {q.expires_at ? t("until", { date: q.expires_at }) : t("noExpiry")}
+                  {/* fmtDate, like every other date on this page. The raw
+                      column value was reaching the screen only in the
+                      read-only branch. */}
+                  {q.expires_at ? t("until", { date: fmtDate(q.expires_at) }) : t("noExpiry")}
                 </span>
               </li>
             ))}

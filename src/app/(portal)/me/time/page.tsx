@@ -80,14 +80,23 @@ export default async function MyTimePage() {
       ) : (
         <>
           <div className="rounded-lg border bg-card p-3">
-            <p className="text-xs text-muted-foreground">{t("recordedTotal")}</p>
+            {/* The query takes the 30 most recent entries, so the total is the
+                total OF THOSE. Calling it "recorded in total" implied a
+                lifetime figure the page never had. */}
+            <p className="text-xs text-muted-foreground">
+              {t("recordedTotal", { count: entries.length })}
+            </p>
             <p className="text-2xl font-semibold tabular-nums">{formatMinutes(totalMinutes)}</p>
           </div>
 
           <ul className="flex flex-col gap-2">
             {entries.map((entry) => {
               const job = entry.shift_assignments?.shifts?.jobs ?? null;
-              const running = !entry.clock_out;
+              // `status` is already fetched and is the authoritative state.
+              // Deriving everything from clock_out alone showed a plain
+              // "Running" badge to someone who is actually on a break.
+              const open = !entry.clock_out;
+              const onBreak = entry.status === "on_break";
               return (
                 <li
                   key={entry.id}
@@ -110,7 +119,9 @@ export default async function MyTimePage() {
                     {entry.clock_in_location_status === "outside_geofence" && (
                       <Badge variant="warning">{t("outsideSite")}</Badge>
                     )}
-                    {running ? (
+                    {onBreak ? (
+                      <Badge variant="warning">{t("onBreak")}</Badge>
+                    ) : open ? (
                       <Badge variant="success">{t("running")}</Badge>
                     ) : (
                       <span className="text-sm font-medium tabular-nums">

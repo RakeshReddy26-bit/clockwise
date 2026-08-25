@@ -5,8 +5,8 @@
     "language": "Sprache",
     "german": "Deutsch",
     "english": "Englisch",
-    "comingSoon": "Dieser Bereich wird in der nächsten Phase freigeschaltet.",
-    "comingSoonTitle": "Bald verfügbar",
+    "comingSoon": "Dieser Bereich ist nicht Teil dieser Version.",
+    "comingSoonTitle": "Geplant",
     "loading": "Wird geladen …",
     "error": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
     "backToOverview": "Zurück zur Übersicht",
@@ -23,7 +23,8 @@
     "submit": "Anmelden",
     "invalidCredentials": "E-Mail oder Passwort ist falsch.",
     "noMembership": "Ihr Konto ist keinem Unternehmen zugeordnet. Bitte wenden Sie sich an Ihre Verwaltung.",
-    "invalidLink": "Dieser Einladungslink ist nicht mehr gültig. Bitte fordern Sie eine neue Einladung an."
+    "invalidLink": "Dieser Einladungslink ist nicht mehr gültig. Bitte fordern Sie eine neue Einladung an.",
+    "submitPending": "Anmeldung läuft …"
   },
   "managerNav": {
     "dashboard": "Dashboard",
@@ -39,7 +40,7 @@
     "documents": "Dokumente",
     "settings": "Einstellungen",
     "groupOperations": "Tagesgeschäft",
-    "groupPlanned": "In Entwicklung"
+    "groupPlanned": "Geplant"
   },
   "employeeNav": {
     "home": "Start",
@@ -52,15 +53,13 @@
     "profile": "Profil",
     "absences": "Abwesenheiten"
   },
-  "dashboard": {
-    "title": "Dashboard",
-    "welcome": "Willkommen zurück, {name}",
-    "foundationNote": "Grundgerüst eingerichtet. Kennzahlen und Aktivitäten folgen in Phase 1B."
-  },
   "home": {
     "title": "Start",
     "welcome": "Hallo, {name}",
-    "foundationNote": "Ihre Schichten, Arbeitszeit und Abwesenheiten — alles an einem Ort."
+    "foundationNote": "Ihre Schichten, Arbeitszeit und Abwesenheiten — alles an einem Ort.",
+    "openOffers": "{count, plural, one {# Schichtangebot wartet auf Ihre Antwort} other {# Schichtangebote warten auf Ihre Antwort}}",
+    "openOffersAction": "Antworten",
+    "plannedTag": "Geplant"
   },
   "terms": {
     "building_services": "Gebäudetechnik",
@@ -747,9 +746,22 @@
     "noneTitle": "Noch keine Zeiten erfasst",
     "noneBody": "Sobald Sie sich an einem Einsatzort anmelden, erscheinen Ihre Zeiten hier.",
     "toShifts": "Zu meinen Schichten",
-    "recordedTotal": "Erfasst gesamt",
+    "recordedTotal": "Summe — letzte {count} Einträge",
     "noSite": "Ohne Einsatzort",
     "running": "Läuft",
-    "outsideSite": "Außerhalb des Einsatzorts"
+    "outsideSite": "Außerhalb des Einsatzorts",
+    "onBreak": "In Pause"
+  },
+  "nextShift": {
+    "title": "Nächste Schicht",
+    "state_on_duty": "Eingestempelt",
+    "state_in_progress": "Begonnen",
+    "state_upcoming": "Bevorstehend",
+    "day_today": "Heute",
+    "day_tomorrow": "Morgen",
+    "ctaOnDuty": "Schicht öffnen und ausstempeln",
+    "ctaOpen": "Schichtdetails öffnen",
+    "noneTitle": "Keine bevorstehende Schicht",
+    "noneBody": "Neue Schichtangebote erscheinen unter „Meine Schichten“."
   }
 }

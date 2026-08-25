@@ -5,8 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Term, SiteName, localizedSite } from "@/components/localized-term";
 import { OfferList } from "@/components/offer-list";
-import { OfferOutcomes } from "@/components/offer-outcomes";
-import { RemovalNotices } from "@/components/removal-notices";
 import { ClockInPanel } from "./clock-in-panel";
 import { CancelPanel } from "./cancel-panel";
 
@@ -133,18 +131,11 @@ export default async function MyShiftsPage() {
     <div className="flex flex-col gap-4">
       <h1 className="text-xl font-semibold tracking-tight">{t("title")}</h1>
 
-      <RemovalNotices
-        supabase={ctx.supabase}
-        profileId={ctx.userId}
-        companyId={ctx.membership.company_id}
-      />
-
-      <OfferOutcomes
-        supabase={ctx.supabase}
-        employeeId={employee.id}
-        companyId={ctx.membership.company_id}
-      />
-
+      {/*
+        Removal notices and offer outcomes moved to Home, which is the
+        attention surface. Both used to render here as well, so two adjacent
+        tabs showed the same cards. This page is the offer and shift workspace.
+      */}
       <OfferList
         supabase={ctx.supabase}
         employeeId={employee.id}
@@ -204,23 +195,25 @@ export default async function MyShiftsPage() {
             )}
 
             {/*
-              Above the clock-in panel on purpose. Below it, the action sat
-              under the site map and the locate button — off the bottom of a
-              phone screen, and easy to miss entirely.
+              Work first, exception second. Cancellation used to sit above this
+              because the clock-in action was falling off the bottom of a phone
+              screen — but that fixed the fold by demoting the thing almost
+              everyone opens this page to do. The panel leads now; asking to be
+              released is the rarer case and reads fine below it.
             */}
-            <CancelPanel
-              assignmentId={current.id}
-              hasPendingRequest={pendingCancellation.has(current.id)}
-            />
-
-            <Separator />
-
             <ClockInPanel
               assignmentId={current.id}
               siteName={await localizedSite(siteName)}
               site={site}
               runningEntryId={runningEntry?.id ?? null}
               hasPendingRequest={hasPendingRequest}
+            />
+
+            <Separator />
+
+            <CancelPanel
+              assignmentId={current.id}
+              hasPendingRequest={pendingCancellation.has(current.id)}
             />
           </CardContent>
         </Card>

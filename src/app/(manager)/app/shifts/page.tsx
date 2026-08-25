@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { loadCandidateInputsForShift, toShiftContext, type ShiftRow } from "@/lib/candidates";
 import { rankCandidates, OCCUPYING_ASSIGNMENT_STATUSES, type IneligibleReason } from "@/lib/eligibility";
 import { roleHas } from "@/lib/permissions";
+import { shiftAttention } from "@/lib/shift-attention";
 import { CancellationRequests } from "@/components/cancellation-requests";
 import { OfferPanel, type CandidateView } from "./offer-panel";
 import { ResponseActions } from "./response-actions";
@@ -237,7 +238,11 @@ export default async function ShiftPlanningPage({
         <h1 className="text-xl font-semibold tracking-tight">{t("title")}</h1>
         <div className="flex items-center gap-3">
           <p className="text-xs text-muted-foreground">
-            {t("understaffedCount", { count: understaffed.length })}
+            {/* "0 shifts understaffed" is a worse way of saying "all staffed",
+                and the sentence for it already existed unused. */}
+            {understaffed.length === 0
+              ? t("allStaffed")
+              : t("understaffedCount", { count: understaffed.length })}
           </p>
           {canSchedule && (
             <Link href="/app/shifts/new" className={buttonVariants({ size: "sm" })}>
@@ -268,7 +273,12 @@ export default async function ShiftPlanningPage({
             <tbody>
               {shifts.map((s) => {
                 const filled = occupiedBy.get(s.id) ?? 0;
-                const open = s.required_count - filled;
+                const attention = shiftAttention({
+                  filled,
+                  requiredCount: s.required_count,
+                  hasOpenOffer: openOfferBy.has(s.id),
+                });
+                const open = attention.openSeats;
                 const isSelected = s.id === selected?.id;
                 return (
                   <tr
@@ -308,10 +318,19 @@ export default async function ShiftPlanningPage({
                       </span>
                     </td>
                     <td className="px-3 py-2">
-                      {openOfferBy.has(s.id) ? (
-                        <Badge variant="warning">{t("offerPending")}</Badge>
-                      ) : open > 0 ? (
-                        <Badge variant="destructive">{t("statusUnderstaffed")}</Badge>
+                      {/*
+                        Staffing is the verdict; an open offer is a note beside
+                        it. Testing the offer first used to render "Offer sent"
+                        on a shift that still had empty seats, which hid the
+                        shifts a manager is scanning this column to find.
+                      */}
+                      {attention.level === "understaffed" ? (
+                        <div className="flex flex-wrap items-center gap-1">
+                          <Badge variant="destructive">{t("statusUnderstaffed")}</Badge>
+                          {attention.offerPending && (
+                            <Badge variant="warning">{t("offerPending")}</Badge>
+                          )}
+                        </div>
                       ) : (
                         <Badge variant="success">{t("statusStaffed")}</Badge>
                       )}
