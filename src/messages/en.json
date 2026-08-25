@@ -60,7 +60,7 @@
   "home": {
     "title": "Home",
     "welcome": "Hello, {name}",
-    "foundationNote": "Foundation is in place. Your shifts and time tracking arrive in the next phases."
+    "foundationNote": "Your shifts, working time and absences — all in one place."
   },
   "terms": {
     "building_services": "Building Services",

@@ -60,7 +60,7 @@
   "home": {
     "title": "Start",
     "welcome": "Hallo, {name}",
-    "foundationNote": "Grundgerüst eingerichtet. Ihre Schichten und die Zeiterfassung folgen in den nächsten Phasen."
+    "foundationNote": "Ihre Schichten, Arbeitszeit und Abwesenheiten — alles an einem Ort."
   },
   "terms": {
     "building_services": "Gebäudetechnik",
