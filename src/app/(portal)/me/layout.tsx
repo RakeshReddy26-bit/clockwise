@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { getShellContext, brandingStyle } from "@/lib/shell-context";
 import { PortalNav, type PortalNavItem } from "@/components/portal-nav";
 import { LanguageToggle } from "@/components/language-toggle";
+import { ScrollReset } from "@/components/scroll-reset";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/app/(auth)/login/actions";
 import { LogOut } from "lucide-react";
@@ -31,6 +32,8 @@ export default async function PortalLayout({
       className="flex min-h-dvh flex-col bg-background"
       style={brandingStyle(ctx.company.settings)}
     >
+      {/* Renders nothing; see the component for why entering a shell needs it. */}
+      <ScrollReset />
       <header className="sticky top-0 z-30 flex h-13 items-center justify-between border-b bg-card/95 px-4 backdrop-blur">
         <div className="flex items-center gap-2">
           <span className="flex size-7 items-center justify-center rounded-md bg-primary font-mono text-xs font-semibold text-primary-foreground">

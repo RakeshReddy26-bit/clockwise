@@ -277,7 +277,9 @@ export default async function ShiftPlanningPage({
                   >
                     <td className="px-3 py-2">
                       <Link
-                        href={isSelected ? "/app/shifts" : `/app/shifts?shift=${s.id}`}
+                        href={
+                          isSelected ? "/app/shifts" : `/app/shifts?shift=${s.id}#shift-detail`
+                        }
                         className="font-medium hover:underline"
                       >
                         {s.jobs?.locations?.name ? (
@@ -322,8 +324,13 @@ export default async function ShiftPlanningPage({
         </div>
       )}
 
+      {/* The detail renders after the table in document order, and a <Link>
+          lands a navigation at the top of the page — so on a long list the
+          selection appeared far below the fold. The hash makes the router
+          scroll it into view instead. Deselecting carries no hash and returns
+          to the top, which is the right place for the list. */}
       {selected && (
-        <Card>
+        <Card id="shift-detail" className="scroll-mt-4">
           <CardHeader>
             <CardTitle className="text-base">
               {selected.jobs?.locations?.name ? (

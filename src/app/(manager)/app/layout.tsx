@@ -4,6 +4,7 @@ import { getShellContext, brandingStyle } from "@/lib/shell-context";
 import { isManagerRole } from "@/lib/permissions";
 import { ManagerNav, ManagerNavBar, type NavItem, type NavGroup } from "@/components/manager-nav";
 import { LanguageToggle } from "@/components/language-toggle";
+import { ScrollReset } from "@/components/scroll-reset";
 import { RoleLabel } from "@/components/localized-term";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,8 @@ export default async function ManagerLayout({
       className="flex min-h-dvh bg-background"
       style={brandingStyle(ctx.company.settings)}
     >
+      {/* Renders nothing; see the component for why entering a shell needs it. */}
+      <ScrollReset />
       <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r bg-card p-3 md:flex">
         <div className="mb-4 flex items-center gap-2 px-1.5 pt-1">
           <span className="flex size-7 items-center justify-center rounded-md bg-primary font-mono text-xs font-semibold text-primary-foreground">
