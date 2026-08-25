@@ -349,7 +349,12 @@
     "reasonEntrance": "Eingang verlegt",
     "reasonAlternate": "Alternativer Einsatzort",
     "reasonInstructed": "Anweisung der Einsatzleitung",
-    "reasonOther": "Sonstiges"
+    "reasonOther": "Sonstiges",
+    "requestApproved": "Stempelung für {name} genehmigt.",
+    "requestRejected": "Stempel-Anfrage von {name} abgelehnt.",
+    "requestPending": "Wartet auf Entscheidung",
+    "decisionsReadOnly": "Nur zur Information — über Stempel-Anfragen entscheidet die Einsatzplanung.",
+    "errorGeneric": "Das hat nicht geklappt. Bitte erneut versuchen."
   },
   "cancellation": {
     "badge": "Absage beantragt",
@@ -427,6 +432,7 @@
     "refused_no_changes": "Es wurde nichts geändert.",
     "refused_requires_confirmation": "Bitte bestätigen Sie die Änderung.",
     "refused_updated": "Gespeichert.",
+    "errorGeneric": "Die Schicht konnte nicht gespeichert werden. Bitte erneut versuchen.",
     "cancelShift": "Schicht absagen",
     "cancelConfirm": "{site} am {when} wirklich absagen?",
     "cancelConfirmPeople": "{count, plural, one {# eingeteilte Person wird ausgeplant und informiert.} other {# eingeteilte Personen werden ausgeplant und informiert.}}",

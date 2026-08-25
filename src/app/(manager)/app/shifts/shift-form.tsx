@@ -43,7 +43,6 @@ export function ShiftForm({
   initial: ShiftFormValues;
 }) {
   const t = useTranslations("shiftForm");
-  const tp = useTranslations("planning");
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [values, setValues] = useState<ShiftFormValues>(initial);
@@ -98,7 +97,7 @@ export function ShiftForm({
             });
 
       if (!result.ok) {
-        setError(tp("errorGeneric"));
+        setError(t("errorGeneric"));
         return;
       }
 

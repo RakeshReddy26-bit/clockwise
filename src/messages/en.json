@@ -349,7 +349,12 @@
     "reasonEntrance": "Site entrance moved",
     "reasonAlternate": "Working from alternate location",
     "reasonInstructed": "Manager instructed me",
-    "reasonOther": "Other"
+    "reasonOther": "Other",
+    "requestApproved": "Clock-in approved for {name}.",
+    "requestRejected": "Clock-in request rejected for {name}.",
+    "requestPending": "Awaiting decision",
+    "decisionsReadOnly": "For information only — scheduling decides clock-in requests.",
+    "errorGeneric": "That did not work. Please try again."
   },
   "cancellation": {
     "badge": "Cancellation requested",
@@ -427,6 +432,7 @@
     "refused_no_changes": "Nothing was changed.",
     "refused_requires_confirmation": "Please confirm the change.",
     "refused_updated": "Saved.",
+    "errorGeneric": "The shift could not be saved. Please try again.",
     "cancelShift": "Call off shift",
     "cancelConfirm": "Call off {site} on {when}?",
     "cancelConfirmPeople": "{count, plural, one {# assigned person will be released and told.} other {# assigned people will be released and told.}}",

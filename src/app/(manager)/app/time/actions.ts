@@ -106,12 +106,3 @@ export const decideManualClockIn = validatedAction(
     return { outcome: input.decision, timeEntryId };
   }
 );
-
-/** Form bindings for the approval buttons on /app/time. */
-export async function approveManualRequest(formData: FormData) {
-  await decideManualClockIn({ requestId: String(formData.get("requestId")), decision: "approved" });
-}
-
-export async function rejectManualRequest(formData: FormData) {
-  await decideManualClockIn({ requestId: String(formData.get("requestId")), decision: "rejected" });
-}

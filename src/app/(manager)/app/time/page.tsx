@@ -3,11 +3,11 @@ import { getTranslations, getLocale } from "next-intl/server";
 import { getShellContext } from "@/lib/shell-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { roleHas } from "@/lib/permissions";
 import { formatDistance } from "@/lib/geo";
 import { SiteName } from "@/components/localized-term";
-import { approveManualRequest, rejectManualRequest } from "./actions";
+import { ManualClockInDecision } from "./manual-clockin-decisions";
 
 type EntryRow = {
   id: string;
@@ -60,6 +60,11 @@ export default async function TimeBoardPage({
   const t = await getTranslations("timeBoard");
   const locale = await getLocale();
   const { filter = "all" } = await searchParams;
+  // The server already refuses without time.manage (time/actions.ts). This is
+  // the same check on the UI side, so a role that cannot decide is not offered
+  // buttons that would silently do nothing. HR_MANAGER still sees the queue —
+  // knowing a request is waiting is useful even when someone else decides it.
+  const canDecide = roleHas(ctx.membership.role, "time.manage");
 
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
@@ -131,6 +136,9 @@ export default async function TimeBoardPage({
             <CardTitle className="text-base">{t("pendingRequests")}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
+            {!canDecide && (
+              <p className="text-xs text-muted-foreground">{t("decisionsReadOnly")}</p>
+            )}
             {((requests ?? []) as unknown as RequestRow[]).map((r) => (
               <div
                 key={r.id}
@@ -145,16 +153,14 @@ export default async function TimeBoardPage({
                     {` · ${fmtTime(r.created_at)}`}
                   </p>
                 </div>
-                <div className="flex gap-2">
-                  <form action={approveManualRequest}>
-                    <input type="hidden" name="requestId" value={r.id} />
-                    <Button size="sm" type="submit">{t("approve")}</Button>
-                  </form>
-                  <form action={rejectManualRequest}>
-                    <input type="hidden" name="requestId" value={r.id} />
-                    <Button size="sm" variant="outline" type="submit">{t("reject")}</Button>
-                  </form>
-                </div>
+                {canDecide ? (
+                  <ManualClockInDecision
+                    requestId={r.id}
+                    employeeName={r.employees?.full_name ?? ""}
+                  />
+                ) : (
+                  <Badge variant="warning">{t("requestPending")}</Badge>
+                )}
               </div>
             ))}
           </CardContent>
