@@ -218,7 +218,11 @@ export function ClockInPanel({
       {message?.kind === "unavailable" && (
         <p role="alert" className="text-sm text-muted-foreground">{t("rejectedUnavailable")}</p>
       )}
-      {message?.kind === "pending" && (
+      {/* Only until the server catches up. requestManualClockIn() revalidates
+          /me/shifts, so hasPendingRequest becomes true a moment later and the
+          persistent notice below says the same sentence — without this guard
+          both render at once and the employee sees it twice. */}
+      {message?.kind === "pending" && !hasPendingRequest && (
         <p role="status" className="text-sm font-medium text-warning">{t("manualPending")}</p>
       )}
       {message?.kind === "inactive" && (
