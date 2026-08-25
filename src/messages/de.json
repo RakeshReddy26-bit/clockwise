@@ -604,7 +604,8 @@
     "refusedStatus_invalid_status": "Dieser Status ist nicht zulässig.",
     "refusedStatus_forbidden": "Dafür fehlt Ihnen die Berechtigung.",
     "refusedStatus_not_found": "Der Mitarbeiter ist nicht mehr vorhanden.",
-    "errorGeneric": "Das hat nicht geklappt. Bitte erneut versuchen."
+    "errorGeneric": "Das hat nicht geklappt. Bitte erneut versuchen.",
+    "sectionAccount": "Zugang"
   },
   "profile": {
     "title": "Profil",
@@ -669,5 +670,47 @@
     "refused_invalid_weekday": "Ungültiger Wochentag.",
     "refused_invalid_type": "Ungültige Art.",
     "errorGeneric": "Das hat nicht geklappt. Bitte erneut versuchen."
+  },
+  "account": {
+    "state_no_account": "Kein Zugang",
+    "state_invited": "Eingeladen",
+    "state_active": "Aktiv",
+    "state_suspended": "Gesperrt",
+    "action_invite": "Einladen",
+    "action_resend": "Erneut senden",
+    "action_suspend": "Zugang sperren",
+    "action_reactivate": "Zugang freigeben",
+    "hint_no_account": "Es existiert noch kein Benutzerkonto. Eine Einladung wird an die hinterlegte E-Mail-Adresse gesendet.",
+    "hint_invited": "Die Einladung wurde gesendet und ist noch nicht angenommen.",
+    "hint_active": "Der Mitarbeiter kann sich anmelden.",
+    "hint_suspended": "Der Zugang ist gesperrt. Historische Daten bleiben erhalten.",
+    "invited": "Einladung gesendet.",
+    "resent": "Einladung erneut gesendet.",
+    "suspended": "Zugang gesperrt.",
+    "reactivated": "Zugang wieder freigegeben.",
+    "refused_already_linked": "Für diesen Mitarbeiter besteht bereits ein Konto.",
+    "refused_no_email": "Es ist keine E-Mail-Adresse hinterlegt.",
+    "refused_not_employed": "Ausgeschiedene Mitarbeiter werden nicht eingeladen.",
+    "refused_account_exists": "Diese E-Mail-Adresse gehört bereits zu einem Konto. Aus Sicherheitsgründen wird sie nicht automatisch verknüpft.",
+    "refused_not_configured": "Der Einladungslink ist nicht konfiguriert (NEXT_PUBLIC_SITE_URL).",
+    "refused_not_invited": "Es liegt keine offene Einladung vor.",
+    "refusedAccess_forbidden": "Nur die Unternehmensadministration kann den Zugang ändern.",
+    "refusedAccess_no_account": "Für diesen Mitarbeiter besteht kein Konto.",
+    "refusedAccess_still_invited": "Die Einladung wurde noch nicht angenommen.",
+    "refusedAccess_unchanged": "Der Zugang hat diesen Stand bereits.",
+    "refusedAccess_not_found": "Der Mitarbeiter ist nicht mehr vorhanden.",
+    "errorGeneric": "Das hat nicht geklappt. Bitte erneut versuchen."
+  },
+  "welcome": {
+    "title": "Willkommen bei Clockwise",
+    "intro": "Ihr Zugang ist eingerichtet. Hier finden Sie ab sofort Ihre Einsätze.",
+    "shiftsTitle": "Ihre Schichten",
+    "shiftsBody": "Zugeteilte Einsätze und offene Angebote auf einen Blick.",
+    "clockTitle": "Kommen und Gehen",
+    "clockBody": "Am Einsatzort ein- und ausstempeln.",
+    "absenceTitle": "Urlaub und Krankmeldung",
+    "absenceBody": "Urlaub beantragen und Krankmeldungen erfassen.",
+    "start": "Loslegen",
+    "completeProfile": "Telefonnummer und Verfügbarkeit ergänzen"
   }
 }

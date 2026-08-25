@@ -489,7 +489,14 @@ describe("set_employment_status", () => {
     const log = await audits();
     expect(log).toHaveLength(1);
     expect(log[0].action).toBe("employee.status_changed");
-    expect(log[0].diff).toEqual({ from: "active", to: "terminated", future_assignments: 0 });
+    // access: 0017 suspends the linked membership. This employee has an
+    // account, so the transition is recorded as suspended.
+    expect(log[0].diff).toEqual({
+      from: "active",
+      to: "terminated",
+      future_assignments: 0,
+      access: "suspended",
+    });
   });
 
   it("terminating is NEVER refused because of a future assignment — it reports it", async () => {

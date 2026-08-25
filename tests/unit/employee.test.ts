@@ -156,9 +156,10 @@ describe("account state", () => {
     expect(accountState(null, "active")).toBe("no_account");
   });
 
-  it("a linked profile is active or invited by its membership", () => {
+  it("a linked profile takes its state from the membership", () => {
     expect(accountState("p1", "active")).toBe("active");
     expect(accountState("p1", "invited")).toBe("invited");
+    expect(accountState("p1", "suspended")).toBe("suspended");
     expect(accountState("p1", null)).toBe("invited");
   });
 });

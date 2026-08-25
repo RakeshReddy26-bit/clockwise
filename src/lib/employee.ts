@@ -187,7 +187,7 @@ export function changedFieldNames(
 /* Account state                                                       */
 /* ------------------------------------------------------------------ */
 
-export type AccountState = "no_account" | "invited" | "active";
+export type AccountState = "no_account" | "invited" | "active" | "suspended";
 
 /**
  * Derived, not stored. Phase F creates employee records with no account at all
@@ -205,6 +205,11 @@ export function accountState(
 ): AccountState {
   if (profileId === null) return "no_account";
   if (membershipStatus === "active") return "active";
+  // Phase G: suspension became a state an operator acts on, so it stops being
+  // folded into "invited". A linked profile with no membership row at all is
+  // still reported as invited — the invitation created the membership, so its
+  // absence means somebody removed it, and "invited" is the honest floor.
+  if (membershipStatus === "suspended") return "suspended";
   return "invited";
 }
 

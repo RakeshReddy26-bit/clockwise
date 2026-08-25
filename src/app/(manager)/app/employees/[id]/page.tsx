@@ -9,6 +9,7 @@ import { OCCUPYING_ASSIGNMENT_STATUSES } from "@/lib/eligibility";
 import { accountState } from "@/lib/employee";
 import { EmployeeForm, type Option } from "../employee-form";
 import { StatusControl, QualificationEditor, type QualificationRow } from "../employee-controls";
+import { AccountPanel } from "../account-panel";
 
 /**
  * One employee.
@@ -171,6 +172,19 @@ export default async function EmployeeDetailPage({
           </span>
         </div>
       </div>
+
+      {canManage && (
+        <section className="flex flex-col gap-3 rounded-lg border bg-card p-3">
+          <h2 className="text-sm font-semibold">{t("sectionAccount")}</h2>
+          {/* Employment and access are separate concepts and separate panels. */}
+          <AccountPanel
+            employeeId={employee.id}
+            state={account}
+            email={employee.email}
+            role={ctx.membership.role}
+          />
+        </section>
+      )}
 
       {canManage && (
         <section className="flex flex-col gap-3 rounded-lg border bg-card p-3">

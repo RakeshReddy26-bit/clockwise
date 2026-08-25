@@ -604,7 +604,8 @@
     "refusedStatus_invalid_status": "That status is not allowed.",
     "refusedStatus_forbidden": "You do not have permission to do that.",
     "refusedStatus_not_found": "That employee no longer exists.",
-    "errorGeneric": "That did not work. Please try again."
+    "errorGeneric": "That did not work. Please try again.",
+    "sectionAccount": "Account"
   },
   "profile": {
     "title": "Profile",
@@ -669,5 +670,47 @@
     "refused_invalid_weekday": "Invalid weekday.",
     "refused_invalid_type": "Invalid type.",
     "errorGeneric": "That did not work. Please try again."
+  },
+  "account": {
+    "state_no_account": "No account",
+    "state_invited": "Invited",
+    "state_active": "Active",
+    "state_suspended": "Suspended",
+    "action_invite": "Send invite",
+    "action_resend": "Resend invite",
+    "action_suspend": "Suspend access",
+    "action_reactivate": "Reactivate access",
+    "hint_no_account": "No user account yet. An invitation goes to the email address on file.",
+    "hint_invited": "The invitation has been sent and not yet accepted.",
+    "hint_active": "This employee can sign in.",
+    "hint_suspended": "Access is suspended. Historical data is kept.",
+    "invited": "Invitation sent.",
+    "resent": "Invitation sent again.",
+    "suspended": "Access suspended.",
+    "reactivated": "Access reactivated.",
+    "refused_already_linked": "This employee already has an account.",
+    "refused_no_email": "No email address on file.",
+    "refused_not_employed": "People who have left are not invited.",
+    "refused_account_exists": "That email address already belongs to an account. For security it is not linked automatically.",
+    "refused_not_configured": "The invitation link is not configured (NEXT_PUBLIC_SITE_URL).",
+    "refused_not_invited": "There is no open invitation.",
+    "refusedAccess_forbidden": "Only company administration can change access.",
+    "refusedAccess_no_account": "This employee has no account.",
+    "refusedAccess_still_invited": "The invitation has not been accepted yet.",
+    "refusedAccess_unchanged": "Access is already in that state.",
+    "refusedAccess_not_found": "That employee no longer exists.",
+    "errorGeneric": "That did not work. Please try again."
+  },
+  "welcome": {
+    "title": "Welcome to Clockwise",
+    "intro": "Your access is set up. This is where you will find your work from now on.",
+    "shiftsTitle": "Your shifts",
+    "shiftsBody": "Assigned work and open offers at a glance.",
+    "clockTitle": "Clocking in and out",
+    "clockBody": "Start and end your shift on site.",
+    "absenceTitle": "Holiday and sickness",
+    "absenceBody": "Request holiday and report sickness.",
+    "start": "Get started",
+    "completeProfile": "Add your phone number and availability"
   }
 }
