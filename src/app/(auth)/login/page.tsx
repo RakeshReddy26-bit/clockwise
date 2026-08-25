@@ -12,6 +12,13 @@ import {
 import { LanguageToggle } from "@/components/language-toggle";
 import { login } from "./actions";
 
+/** Query-string error codes this page knows how to explain. */
+const ERROR_KEYS: Record<string, string> = {
+  invalid: "invalidCredentials",
+  nomember: "noMembership",
+  invalid_link: "invalidLink",
+};
+
 export default async function LoginPage({
   searchParams,
 }: {
@@ -57,14 +64,14 @@ export default async function LoginPage({
                 required
               />
             </div>
-            {error === "invalid" && (
+            {/* One lookup, so an error code added later cannot land here
+                silently. `invalid_link` is what /auth/confirm redirects to when
+                an invitation link is expired or already used — without a
+                message the recipient just sees an empty form and assumes the
+                product is broken. */}
+            {error && ERROR_KEYS[error] && (
               <p role="alert" className="text-sm text-destructive">
-                {t("invalidCredentials")}
-              </p>
-            )}
-            {error === "nomember" && (
-              <p role="alert" className="text-sm text-destructive">
-                {t("noMembership")}
+                {t(ERROR_KEYS[error])}
               </p>
             )}
             <Button type="submit">{t("submit")}</Button>

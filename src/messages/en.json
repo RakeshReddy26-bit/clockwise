@@ -22,7 +22,8 @@
     "password": "Password",
     "submit": "Sign in",
     "invalidCredentials": "Email or password is incorrect.",
-    "noMembership": "Your account is not linked to any company. Please contact your administration."
+    "noMembership": "Your account is not linked to any company. Please contact your administration.",
+    "invalidLink": "This invitation link is no longer valid. Please ask for a new invitation."
   },
   "managerNav": {
     "dashboard": "Dashboard",
@@ -613,7 +614,8 @@
     "refusedStatus_not_found": "That employee no longer exists.",
     "errorGeneric": "That did not work. Please try again.",
     "sectionAccount": "Account",
-    "noneBody": "Add your first employee to start scheduling."
+    "noneBody": "Add your first employee to start scheduling.",
+    "account_suspended": "Suspended"
   },
   "profile": {
     "title": "Profile",

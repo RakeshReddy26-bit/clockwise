@@ -22,7 +22,8 @@
     "password": "Passwort",
     "submit": "Anmelden",
     "invalidCredentials": "E-Mail oder Passwort ist falsch.",
-    "noMembership": "Ihr Konto ist keinem Unternehmen zugeordnet. Bitte wenden Sie sich an Ihre Verwaltung."
+    "noMembership": "Ihr Konto ist keinem Unternehmen zugeordnet. Bitte wenden Sie sich an Ihre Verwaltung.",
+    "invalidLink": "Dieser Einladungslink ist nicht mehr gültig. Bitte fordern Sie eine neue Einladung an."
   },
   "managerNav": {
     "dashboard": "Dashboard",
@@ -613,7 +614,8 @@
     "refusedStatus_not_found": "Der Mitarbeiter ist nicht mehr vorhanden.",
     "errorGeneric": "Das hat nicht geklappt. Bitte erneut versuchen.",
     "sectionAccount": "Zugang",
-    "noneBody": "Legen Sie Ihren ersten Mitarbeiter an, um mit der Planung zu beginnen."
+    "noneBody": "Legen Sie Ihren ersten Mitarbeiter an, um mit der Planung zu beginnen.",
+    "account_suspended": "Gesperrt"
   },
   "profile": {
     "title": "Profil",
