@@ -15,6 +15,16 @@ import {
   formatMinutes,
   type AssignmentSnapshot,
 } from "@/lib/attendance";
+import { shiftAttention } from "@/lib/shift-attention";
+import {
+  buildAttentionItems,
+  type BoardShift,
+  type PendingRequest,
+} from "@/lib/live-ops";
+import { AttentionPanel } from "@/components/attention-panel";
+
+/** Assignment statuses that hold a seat on the day board. */
+const OCCUPYING_ON_BOARD = ["assigned", "accepted", "cancellation_requested"] as const;
 
 /**
  * Live operations dashboard.
@@ -112,10 +122,16 @@ export default async function DashboardPage({
       .order("start_time", { ascending: true })
       .limit(8),
     ctx.supabase
+      // The attention panel names the person and how long they have waited, so
+      // this reads a little more than the KPI count needs. Still one query.
       .from("manual_clockin_requests")
-      .select("id")
+      .select(
+        "id, created_at, shift_assignment_id, employees(full_name), shift_assignments(shift_id, shifts(jobs(client_name, locations(name))))"
+      )
       .eq("company_id", ctx.membership.company_id)
-      .eq("status", "pending"),
+      .eq("status", "pending")
+      .order("created_at", { ascending: true })
+      .limit(20),
     ctx.supabase
       .from("attendance_alerts")
       .select("id, type, minutes_delta, created_at, employees(full_name)")
@@ -146,9 +162,14 @@ export default async function DashboardPage({
     if (e.shift_assignment_id) entryByAssignment.set(e.shift_assignment_id, e);
   }
 
+  // The board row is per person and carries no shift id; the attention panel
+  // needs one to link "View shift", so keep the mapping alongside.
+  const shiftIdByAssignment = new Map<string, string>();
+
   const board: BoardRow[] = rows
     .filter((r) => r.shifts)
     .map((r) => {
+      shiftIdByAssignment.set(r.id, r.shifts!.id);
       const entry = entryByAssignment.get(r.id) ?? null;
       const snapshot: AssignmentSnapshot = {
         assignmentId: r.id,
@@ -192,6 +213,81 @@ export default async function DashboardPage({
     (b) => b.status === "on_duty" && b.scheduledEnd > now && b.scheduledEnd <= soon
   ).length;
 
+  /*
+   * Triage, from rows this page already has.
+   *
+   * The understaffed side needs seat counts, which the board rows do not carry
+   * — they are per person, not per shift — so occupancy is folded up here from
+   * the same assignment list rather than fetched again. `shiftAttention` stays
+   * the authority on what "understaffed" means.
+   */
+  const shiftById = new Map<string, { siteName: string; required: number; startsAt: Date }>();
+  const occupied = new Map<string, number>();
+  for (const row of rows) {
+    if (!row.shifts) continue;
+    shiftById.set(row.shifts.id, {
+      siteName: row.shifts.jobs?.locations?.name ?? row.shifts.jobs?.client_name ?? "—",
+      required: row.shifts.required_count,
+      startsAt: new Date(row.shifts.start_time),
+    });
+    if ((OCCUPYING_ON_BOARD as readonly string[]).includes(row.status)) {
+      occupied.set(row.shifts.id, (occupied.get(row.shifts.id) ?? 0) + 1);
+    }
+  }
+
+  const boardShifts: BoardShift[] = [...shiftById.entries()].map(([shiftId, shift]) => {
+    const filled = occupied.get(shiftId) ?? 0;
+    const attention = shiftAttention({
+      filled,
+      requiredCount: shift.required,
+      hasOpenOffer: false,
+    });
+    return {
+      shiftId,
+      siteName: shift.siteName,
+      required: shift.required,
+      filled,
+      openSeats: attention.openSeats,
+      startsAt: shift.startsAt,
+    };
+  });
+
+  const pendingRequests: PendingRequest[] = (
+    (manualRequests ?? []) as unknown as Array<{
+      id: string;
+      created_at: string;
+      employees: { full_name: string } | null;
+      shift_assignments: {
+        shift_id: string;
+        shifts: { jobs: { client_name: string; locations: { name: string } | null } | null } | null;
+      } | null;
+    }>
+  ).map((r) => ({
+    requestId: r.id,
+    employeeName: r.employees?.full_name ?? "—",
+    siteName:
+      r.shift_assignments?.shifts?.jobs?.locations?.name ??
+      r.shift_assignments?.shifts?.jobs?.client_name ??
+      "—",
+    shiftId: r.shift_assignments?.shift_id ?? null,
+    createdAt: new Date(r.created_at),
+  }));
+
+  const attention = buildAttentionItems({
+    people: board.map((b) => ({
+      assignmentId: b.assignmentId,
+      employeeName: b.employeeName,
+      siteName: b.siteName,
+      shiftId: shiftIdByAssignment.get(b.assignmentId) ?? null,
+      status: b.status,
+      minutesLate: b.minutesLate,
+      distanceM: b.distanceM,
+    })),
+    shifts: boardShifts,
+    requests: pendingRequests,
+    now,
+  });
+
   const filtered = board.filter((r) => {
     if (filters.site && filters.site !== "all" && r.locationId !== filters.site) return false;
     if (filters.department && filters.department !== "all" && r.departmentId !== filters.department)
@@ -219,6 +315,10 @@ export default async function DashboardPage({
           {t("scheduledToday", { count: kpis.scheduled })} · {t("liveHint")}
         </p>
       </div>
+
+      {/* Triage first. The KPI row below is the same information one level
+          less specific, and a manager reads it second. */}
+      <AttentionPanel items={attention.items} total={attention.total} />
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
         <KpiCard label={t("kpiOnDuty")} value={kpis.onDuty} tone="good" href="/app?status=on_duty" />

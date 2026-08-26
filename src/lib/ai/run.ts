@@ -18,6 +18,7 @@ import {
 } from "@/lib/ai/tools/registry";
 import { READ_TOOLS } from "@/lib/ai/tools/read";
 import { PROPOSE_TOOLS } from "@/lib/ai/tools/propose";
+import { BRIEFING_TOOLS } from "@/lib/ai/tools/briefing";
 
 /**
  * The conversation loop: ask, run whatever tools the model asked for, ask again.
@@ -34,7 +35,13 @@ const MAX_TURNS = 6;
 /** Tool payloads are trimmed before they go upstream; see `capResult`. */
 const MAX_TOOL_RESULT_CHARS = 12_000;
 
-export const ALL_TOOLS: readonly AiTool[] = [...READ_TOOLS, ...PROPOSE_TOOLS];
+export const ALL_TOOLS: readonly AiTool[] = [
+  // Briefing leads so it is the obvious answer to "how is today going" — one
+  // call instead of five, assembled by the same engines the board uses.
+  ...BRIEFING_TOOLS,
+  ...READ_TOOLS,
+  ...PROPOSE_TOOLS,
+];
 
 /** One thing the assistant produced that the UI has to render. */
 export type AssistantTurn = {

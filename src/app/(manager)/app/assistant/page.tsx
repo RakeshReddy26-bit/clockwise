@@ -15,9 +15,14 @@ import { AssistantChat } from "./assistant-chat";
  */
 export const dynamic = "force-dynamic";
 
-export default async function AssistantPage() {
+export default async function AssistantPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ask?: string }>;
+}) {
   const ctx = await getShellContext();
   const t = await getTranslations("assistant");
+  const { ask } = await searchParams;
 
   // Reading company data is the floor for asking anything useful at all.
   if (!roleHas(ctx.membership.role, "employees.read")) {
@@ -28,5 +33,9 @@ export default async function AssistantPage() {
     return <EmptyState title={t("notConfiguredTitle")} body={t("notConfiguredBody")} />;
   }
 
-  return <AssistantChat />;
+  // Arriving from an attention card. The question is carried as text, not as a
+  // shift id, so nothing privileged rides in the URL — the assistant resolves
+  // the shift the same way it would if the manager had typed the sentence.
+  // Bounded here so a long query string cannot become a long prompt.
+  return <AssistantChat initialQuestion={ask?.slice(0, 300) ?? null} />;
 }

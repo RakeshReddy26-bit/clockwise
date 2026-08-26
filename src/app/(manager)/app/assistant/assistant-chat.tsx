@@ -28,9 +28,21 @@ type Entry =
 /** Opaque to this component — the server owns the transcript's shape. */
 type History = AssistantHistory;
 
-const SUGGESTIONS = ["needAttention", "whoToday", "understaffed", "createShifts"] as const;
+/**
+ * Starter prompts, chosen to be the questions a dispatcher actually opens with.
+ * Order matters: triage, then the day, then forward planning.
+ */
+const SUGGESTIONS = [
+  "needAttention",
+  "summariseToday",
+  "whoOnDuty",
+  "understaffed",
+  "findReplacements",
+  "availableTomorrow",
+  "createShifts",
+] as const;
 
-export function AssistantChat() {
+export function AssistantChat({ initialQuestion = null }: { initialQuestion?: string | null }) {
   const t = useTranslations("assistant");
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -43,6 +55,19 @@ export function AssistantChat() {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [entries.length, isPending]);
+
+  // A question carried in from an attention card fires once, on arrival. The
+  // ref guard is what stops React's development double-mount asking twice —
+  // which would be two upstream calls for one click.
+  const askedInitial = useRef(false);
+  useEffect(() => {
+    if (!initialQuestion || askedInitial.current) return;
+    askedInitial.current = true;
+    ask(initialQuestion);
+    // `ask` is stable enough for this one-shot; re-running on its identity
+    // would defeat the guard's purpose.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialQuestion]);
 
   function ask(message: string) {
     const text = message.trim();
