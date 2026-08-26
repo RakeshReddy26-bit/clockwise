@@ -279,7 +279,10 @@ describe("date derivation", () => {
       [A_JOB, start]
     );
     const { rows } = await db.query("select date from public.shifts where id = $1", [r.shift_id]);
-    return (rows[0].date as Date).toISOString().slice(0, 10);
+    // A calendar date, compared as one. Routing it through a JS Date reported
+    // the previous day on any machine east of UTC — see the DATE type parser
+    // in helpers.ts.
+    return rows[0].date as string;
   }
 
   it("uses the German calendar date of the start, not the caller's offset", async () => {
@@ -311,7 +314,7 @@ describe("date derivation", () => {
       end_time: "2027-06-01T12:00:00Z",
     });
     const after = await shift();
-    expect((after.date as Date).toISOString().slice(0, 10)).toBe("2027-06-01");
+    expect(after.date as string).toBe("2027-06-01");
     expect(after.date).not.toEqual(before);
   });
 
@@ -322,7 +325,7 @@ describe("date derivation", () => {
       end_time: "2027-06-01T12:00:00Z",
       date: "2020-01-01",
     });
-    expect(((await shift()).date as Date).toISOString().slice(0, 10)).toBe("2027-06-01");
+    expect((await shift()).date as string).toBe("2027-06-01");
   });
 });
 

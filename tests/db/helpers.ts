@@ -8,7 +8,23 @@
  */
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { Client } from "pg";
+import { Client, types as pgTypes } from "pg";
+
+/**
+ * Read PostgreSQL `date` as the calendar date it is, not as an instant.
+ *
+ * node-postgres otherwise parses OID 1082 into a JS Date at LOCAL midnight, so
+ * `2027-03-10` becomes 2027-03-09T23:00:00Z on a machine in Europe/Berlin and
+ * any `.toISOString()` afterwards reports the previous day. The suites passed
+ * in UTC CI and failed on a German laptop — a property of the developer's
+ * clock, not of the schema.
+ *
+ * A `date` has no timezone, so the only faithful JS representation is the
+ * string Postgres itself prints. This affects tests only: the application
+ * reaches the database through PostgREST/supabase-js, which already returns
+ * these columns as 'YYYY-MM-DD' strings. `pg` is imported nowhere under src/.
+ */
+pgTypes.setTypeParser(pgTypes.builtins.DATE, (value) => value);
 
 const ADMIN_URL =
   process.env.TEST_DB_ADMIN_URL ??
