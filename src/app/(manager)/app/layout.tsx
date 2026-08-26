@@ -31,6 +31,9 @@ export default async function ManagerLayout({
     { href: "/app/employees", label: t("employees"), icon: "employees" },
     { href: "/app/absences", label: t("absences"), icon: "absences" },
     { href: "/app/time", label: t("time"), icon: "time" },
+    // Working, so it belongs in the operational group rather than under
+    // "Planned" — it reads live data and drives the real scheduling actions.
+    { href: "/app/assistant", label: t("assistant"), icon: "assistant" },
   ];
 
   const planned: NavItem[] = [

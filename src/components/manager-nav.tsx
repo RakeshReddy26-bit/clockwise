@@ -15,6 +15,7 @@ import {
   MessageSquare,
   FolderOpen,
   Settings,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -42,6 +43,7 @@ const ICONS: Record<string, LucideIcon> = {
   messages: MessageSquare,
   documents: FolderOpen,
   settings: Settings,
+  assistant: Sparkles,
 };
 
 export function ManagerNav({ groups }: { groups: NavGroup[] }) {
