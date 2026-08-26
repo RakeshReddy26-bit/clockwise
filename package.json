@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "seed": "tsx scripts/seed.ts",
+    "seed:ksk-demo": "tsx scripts/seed-ksk-demo.ts",
     "backfill:coords": "tsx scripts/backfill-location-coords.ts",
     "rename:demo-company": "tsx scripts/rename-demo-company.ts",
     "generalize:demo-data": "tsx scripts/generalize-demo-data.ts",
