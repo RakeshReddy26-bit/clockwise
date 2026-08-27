@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { serverEnv } from "@/lib/env";
+import { serverEnv } from "@/lib/env-server";
 
 /**
  * The auth-admin door — one function, deliberately.

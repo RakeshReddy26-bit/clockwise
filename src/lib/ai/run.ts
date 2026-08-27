@@ -19,6 +19,7 @@ import {
 import { READ_TOOLS } from "@/lib/ai/tools/read";
 import { PROPOSE_TOOLS } from "@/lib/ai/tools/propose";
 import { BRIEFING_TOOLS } from "@/lib/ai/tools/briefing";
+import { MODULE_TOOLS } from "@/lib/ai/tools/modules";
 
 /**
  * The conversation loop: ask, run whatever tools the model asked for, ask again.
@@ -40,6 +41,7 @@ export const ALL_TOOLS: readonly AiTool[] = [
   // call instead of five, assembled by the same engines the board uses.
   ...BRIEFING_TOOLS,
   ...READ_TOOLS,
+  ...MODULE_TOOLS,
   ...PROPOSE_TOOLS,
 ];
 

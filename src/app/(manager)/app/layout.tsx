@@ -34,15 +34,17 @@ export default async function ManagerLayout({
     // Working, so it belongs in the operational group rather than under
     // "Planned" — it reads live data and drives the real scheduling actions.
     { href: "/app/assistant", label: t("assistant"), icon: "assistant" },
+    // Built and reading live data, so they belong beside the rest of the day's
+    // work rather than under "Planned".
+    { href: "/app/jobs", label: t("jobs"), icon: "jobs" },
+    { href: "/app/calendar", label: t("calendar"), icon: "calendar" },
+    { href: "/app/messages", label: t("messages"), icon: "messages" },
+    { href: "/app/news", label: t("news"), icon: "news" },
   ];
 
   const planned: NavItem[] = [
-    { href: "/app/jobs", label: t("jobs"), icon: "jobs" },
-    { href: "/app/calendar", label: t("calendar"), icon: "calendar" },
     { href: "/app/recruitment", label: t("recruitment"), icon: "recruitment" },
     { href: "/app/documents", label: t("documents"), icon: "documents" },
-    { href: "/app/messages", label: t("messages"), icon: "messages" },
-    { href: "/app/news", label: t("news"), icon: "news" },
     { href: "/app/settings", label: t("settings"), icon: "settings" },
   ];
 

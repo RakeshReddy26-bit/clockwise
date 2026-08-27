@@ -5,6 +5,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { NextShiftCard } from "@/components/next-shift-card";
 import { OfferOutcomes } from "@/components/offer-outcomes";
 import { RemovalNotices } from "@/components/removal-notices";
+import { Announcements } from "@/components/announcements";
 
 /**
  * The employee's landing page.
@@ -46,9 +47,9 @@ export default async function HomePage() {
   // taps one expecting a feature.
   const quickLinks = [
     { href: "/me/requests", label: tn("requests"), planned: false },
-    { href: "/me/calendar", label: tn("calendar"), planned: true },
+    { href: "/me/calendar", label: tn("calendar"), planned: false },
+    { href: "/me/messages", label: tn("messages"), planned: false },
     { href: "/me/documents", label: tn("documents"), planned: true },
-    { href: "/me/messages", label: tn("messages"), planned: true },
   ];
 
   return (
@@ -88,6 +89,8 @@ export default async function HomePage() {
             employeeId={employee.id}
             companyId={ctx.membership.company_id}
           />
+          {/* Company news last: it is context, not a task. */}
+          <Announcements supabase={ctx.supabase} companyId={ctx.membership.company_id} />
         </>
       )}
 

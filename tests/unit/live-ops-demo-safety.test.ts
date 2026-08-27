@@ -35,7 +35,7 @@ describe("it cannot touch a tenant it was not pointed at", () => {
     const start = SOURCE.indexOf("async function retirePreviousRun(");
     const body = SOURCE.slice(start, SOURCE.indexOf("\n}", start));
     expect(body).toContain('.eq("company_id", companyId)');
-    expect(body).toContain('.eq("contact_person", CONTACT_PERSON)');
+    expect(body).toContain('.in("contact_person", [...PRESENTATION_DEMO_CONTACTS])');
   });
 
   it("never deletes anything", () => {

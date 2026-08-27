@@ -58,6 +58,11 @@ const COMPANY_NAMES = [KSK_COMPANY_NAME];
  */
 const DEMO_TAG = "LIVE-OPS DEMO";
 const CONTACT_PERSON = `${DEMO_TAG} · Leitstelle KSK`;
+const ORIGINAL_KSK_DEMO_CONTACT_PERSON = "Marco Litfin — Demo Dispatch";
+const PRESENTATION_DEMO_CONTACTS = [
+  CONTACT_PERSON,
+  ORIGINAL_KSK_DEMO_CONTACT_PERSON,
+] as const;
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -101,11 +106,22 @@ async function resolveCompany(): Promise<{ id: string; name: string; settings: R
  * representation of "this was called off" — the board already knows to drop it.
  */
 async function retirePreviousRun(companyId: string): Promise<number> {
+  // The shifts.date column is derived by the database in Europe/Berlin.
+  // Restrict cleanup to the current presentation day so historical and
+  // future synthetic KSK shifts remain untouched.
+  const presentationDate = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Berlin",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+
   const { data: previous, error } = await db
     .from("shifts")
     .select("id")
     .eq("company_id", companyId)
-    .eq("contact_person", CONTACT_PERSON)
+    .eq("date", presentationDate)
+    .in("contact_person", [...PRESENTATION_DEMO_CONTACTS])
     .in("status", ["open", "staffed", "in_progress"]);
   if (error) throw new Error(`retire lookup: ${error.message}`);
   const ids = (previous ?? []).map((s) => s.id as string);
