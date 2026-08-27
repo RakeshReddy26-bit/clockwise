@@ -169,6 +169,22 @@ export const LIVE_OPS_SHIFTS: DemoShift[] = [
 /** Distinct crew slots the plan needs; the writer resolves this many people. */
 export const LIVE_OPS_CREW_SIZE = 14;
 
+/** Hero replacement scenario used by the demo. */
+export const HERO_SHIFT_KEY = "ostseekai-turnaround";
+
+/**
+ * Employees intentionally kept off today's roster so the normal
+ * eligibility engine can return real replacement candidates.
+ */
+export const RESERVE_SIZE = 4;
+
+/** Role required by the hero shift. */
+export function heroShiftRole(): string {
+  const hero = LIVE_OPS_SHIFTS.find((s) => s.key === HERO_SHIFT_KEY);
+  if (!hero) throw new Error(`hero shift "${HERO_SHIFT_KEY}" is missing from the plan`);
+  return hero.role;
+}
+
 /* ------------------------------------------------------------------ */
 /* Derivations — used by the writer and asserted by the tests          */
 /* ------------------------------------------------------------------ */

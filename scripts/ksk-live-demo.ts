@@ -39,6 +39,9 @@ import {
   locationStatusFor,
   statusFor,
   expectedKpis,
+  heroShiftRole,
+  RESERVE_SIZE,
+  HERO_SHIFT_KEY,
   type DemoShift,
 } from "./live-ops-demo-plan";
 import { KSK_COMPANY_NAME } from "./ksk-demo-plan";
@@ -82,6 +85,20 @@ const db = createClient(url, key, { auth: { persistSession: false } });
 
 const MINUTE = 60_000;
 const at = (offsetMin: number) => new Date(Date.now() + offsetMin * MINUTE).toISOString();
+
+/** Current Europe/Berlin presentation day as an absolute time window. */
+function presentationDayWindow(now: Date): { start: Date; end: Date } {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Berlin",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+
+  const start = new Date(`${parts}T00:00:00+02:00`);
+  const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+  return { start, end };
+}
 
 async function resolveCompany(): Promise<{ id: string; name: string; settings: Record<string, unknown> }> {
   const { data, error } = await db
@@ -177,23 +194,153 @@ async function resolveJob(companyId: string, clientName: string, siteName: strin
   return created.id as string;
 }
 
-/** Active employees with an account, in a stable order, for the crew slots. */
-async function resolveCrew(companyId: string): Promise<Array<{ id: string; name: string }>> {
+/**
+ * Active employees in a stable order: the working crew, then the reserve.
+ *
+ * The reserve is deliberately not rostered in today's LiveOps shifts, so
+ * Clockwise's normal eligibility engine can genuinely consider them.
+ */
+async function resolveCrew(
+  companyId: string
+): Promise<{
+  crew: Array<{ id: string; name: string }>;
+  reserve: Array<{ id: string; name: string }>;
+}> {
+  const needed = LIVE_OPS_CREW_SIZE + RESERVE_SIZE;
+
   const { data, error } = await db
     .from("employees")
     .select("id, full_name, employee_no")
     .eq("company_id", companyId)
     .eq("employment_status", "active")
     .order("employee_no", { ascending: true })
-    .limit(LIVE_OPS_CREW_SIZE);
+    .limit(needed);
+
   if (error) throw new Error(`crew: ${error.message}`);
-  const crew = (data ?? []).map((e) => ({ id: e.id as string, name: e.full_name as string }));
-  if (crew.length < LIVE_OPS_CREW_SIZE) {
+
+  const people = (data ?? []).map((e) => ({
+    id: e.id as string,
+    name: e.full_name as string,
+  }));
+
+  if (people.length < needed) {
     throw new Error(
-      `Need ${LIVE_OPS_CREW_SIZE} active employees, found ${crew.length}. Run npm run seed first.`
+      `Need ${needed} active employees (${LIVE_OPS_CREW_SIZE} on shift + ${RESERVE_SIZE} reserve), found ${people.length}. Run npm run seed:ksk-demo first.`
     );
   }
-  return crew;
+
+  return {
+    crew: people.slice(0, LIVE_OPS_CREW_SIZE),
+    reserve: people.slice(LIVE_OPS_CREW_SIZE, needed),
+  };
+}
+
+/**
+ * Give the synthetic reserve the actual role required by the hero shift.
+ *
+ * This changes demo HR data only. It does not bypass or modify eligibility.
+ */
+async function prepareReserve(
+  companyId: string,
+  reserve: Array<{ id: string; name: string }>
+): Promise<void> {
+  const role = heroShiftRole();
+  const ids = reserve.map((person) => person.id);
+
+  const { error } = await db
+    .from("employees")
+    .update({ position: role })
+    .eq("company_id", companyId)
+    .in("id", ids);
+
+  if (error) throw new Error(`reserve role: ${error.message}`);
+}
+
+/**
+ * Report how many reserve employees are genuinely available today.
+ * This does not bypass the eligibility engine or clear legitimate exclusions.
+ */
+async function reserveAvailableToday(
+  companyId: string,
+  reserve: Array<{ id: string; name: string }>,
+  window: { start: Date; end: Date }
+): Promise<number> {
+  const ids = reserve.map((r) => r.id);
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Berlin",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(window.start);
+
+  const [{ data: busy }, { data: vacation }, { data: sick }, { data: unavailable }] =
+    await Promise.all([
+      db
+        .from("shift_assignments")
+        .select("employee_id, shifts!inner(start_time, end_time)")
+        .eq("company_id", companyId)
+        .in("employee_id", ids)
+        .in("status", ["assigned", "accepted", "cancellation_requested"])
+        .gte("shifts.end_time", window.start.toISOString())
+        .lt("shifts.start_time", window.end.toISOString())
+        .limit(100),
+      db
+        .from("vacation_requests")
+        .select("employee_id")
+        .eq("company_id", companyId)
+        .in("employee_id", ids)
+        .eq("status", "approved")
+        .lte("start_date", today)
+        .gte("end_date", today)
+        .limit(50),
+      db
+        .from("sick_leaves")
+        .select("employee_id")
+        .eq("company_id", companyId)
+        .in("employee_id", ids)
+        .in("status", ["reported", "confirmed"])
+        .lte("start_date", today)
+        .limit(50),
+      db
+        .from("employee_availability")
+        .select("employee_id")
+        .eq("company_id", companyId)
+        .in("employee_id", ids)
+        .eq("type", "unavailable")
+        .limit(50),
+    ]);
+
+  const blocked = new Set<string>();
+  for (const rows of [busy, vacation, sick, unavailable]) {
+    for (const row of (rows ?? []) as Array<{ employee_id: string }>) {
+      blocked.add(row.employee_id);
+    }
+  }
+
+  return ids.filter((id) => !blocked.has(id)).length;
+}
+
+/**
+ * Reject stale pending manual clock-in requests from earlier presentation days.
+ * The KSK demo tenant is synthetic; rows are settled, never deleted.
+ */
+async function settleStaleManualRequests(
+  companyId: string,
+  window: { start: Date; end: Date }
+): Promise<number> {
+  const { data: settled, error } = await db
+    .from("manual_clockin_requests")
+    .update({
+      status: "rejected",
+      decided_at: new Date().toISOString(),
+    })
+    .eq("company_id", companyId)
+    .eq("status", "pending")
+    .lt("created_at", window.start.toISOString())
+    .select("id");
+
+  if (error) throw new Error(`settle manual requests: ${error.message}`);
+  return (settled ?? []).length;
 }
 
 async function writeShift(
@@ -346,8 +493,18 @@ async function main() {
   const retired = await retirePreviousRun(company.id);
   if (retired > 0) console.log(`Retired ${retired} shift(s) from a previous run.\n`);
 
-  const crew = await resolveCrew(company.id);
-  console.log(`Crew: ${crew.length} active employees\n`);
+  const window = presentationDayWindow(new Date());
+
+  const settled = await settleStaleManualRequests(company.id, window);
+  if (settled > 0) {
+    console.log(`Settled ${settled} stale manual clock-in request(s).\n`);
+  }
+
+  const { crew, reserve } = await resolveCrew(company.id);
+  await prepareReserve(company.id, reserve);
+  console.log(
+    `Crew: ${crew.length} on shift, ${reserve.length} reserve (${heroShiftRole()})\n`
+  );
 
   for (const spec of LIVE_OPS_SHIFTS) {
     const jobId = await resolveJob(company.id, spec.clientName, spec.siteName);
@@ -358,6 +515,18 @@ async function main() {
   const thresholds = attendanceThresholds(company.settings);
   const alerts = await writeAlerts(company.id, thresholds, crew);
   console.log(`\nAlerts written: ${alerts}`);
+
+  const eligibleReserve = await reserveAvailableToday(company.id, reserve, window);
+  console.log(
+    `Reserve available for ${HERO_SHIFT_KEY}: ${eligibleReserve}/${RESERVE_SIZE}`
+  );
+
+  if (eligibleReserve < 3) {
+    console.warn(
+      "  WARNING: fewer than 3 reserve candidates are genuinely available.\n" +
+        "  Check absence, availability, or overlapping-shift data instead of relaxing eligibility."
+    );
+  }
 
   const kpis = expectedKpis(thresholds);
   console.log("\nThe operations board should now show:");
