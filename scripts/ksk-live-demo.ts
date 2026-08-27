@@ -41,16 +41,14 @@ import {
   expectedKpis,
   type DemoShift,
 } from "./live-ops-demo-plan";
+import { KSK_COMPANY_NAME } from "./ksk-demo-plan";
 import { attendanceThresholds } from "../src/lib/attendance";
 
 config({ path: ".env.local" });
 config();
 
 /** The demo tenants this script is willing to touch. Nothing else, ever. */
-const COMPANY_NAMES = [
-  "Meridian Facility & Service GmbH",
-  "Meridian Sicherheit & Service GmbH", // legacy, pre-rename
-];
+const COMPANY_NAMES = [KSK_COMPANY_NAME];
 
 /**
  * Stamped on every shift this script creates.
@@ -241,7 +239,7 @@ async function writeShift(
         clock_in: at(clockIn),
         clock_out: clockOut === null ? null : at(clockOut),
         status: clockOut === null ? "running" : "completed",
-        source: "mobile",
+        source: "app",
         clock_in_location_status: locationStatus,
         clock_in_distance_m:
           assignment.intent.kind === "outside_geofence" ? assignment.intent.distanceM : 12,

@@ -119,7 +119,7 @@ export const LIVE_OPS_SHIFTS: DemoShift[] = [
     // Ends within the two-hour window the board calls "ending soon".
     key: "ostuferhafen-early",
     clientName: "Kiel Port Logistics",
-    siteName: "Ostuferhafen Cruise Terminal",
+    siteName: "Ostuferhafen Terminal",
     role: "Logistikmitarbeiter/in",
     startOffsetMin: -6 * HOUR - 40,
     endOffsetMin: HOUR,
@@ -143,7 +143,7 @@ export const LIVE_OPS_SHIFTS: DemoShift[] = [
   {
     key: "hauptbahnhof-evening",
     clientName: "Bahnhofsservice Kiel",
-    siteName: "Kiel Hauptbahnhof",
+    siteName: "Kiel Hauptbahnhof / Hafen Transfer",
     role: "Reinigungskraft",
     startOffsetMin: 7 * HOUR,
     endOffsetMin: 13 * HOUR,

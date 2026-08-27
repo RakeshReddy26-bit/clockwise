@@ -60,7 +60,7 @@ export const getOperationsBriefing: AiTool = defineTool({
     const dayEnd = new Date(`${addDays(date, 1)}T00:00:00Z`);
     const isToday = date === operatingDate(now);
 
-    const [{ data: company }, { data: assignments }, { data: requests }, { data: alerts }] =
+    const [{ data: company }, { data: assignments }, { data: alerts }] =
       await Promise.all([
         ctx.auth.supabase
           .from("companies")
@@ -74,24 +74,31 @@ export const getOperationsBriefing: AiTool = defineTool({
           )
           .eq("company_id", ctx.companyId)
           .in("status", ["assigned", "accepted", "cancellation_requested", "completed"])
+          .neq("shifts.status", "cancelled")
           .gte("shifts.start_time", dayStart.toISOString())
           .lt("shifts.start_time", dayEnd.toISOString())
           .limit(300),
-        ctx.auth.supabase
-          .from("manual_clockin_requests")
-          .select("id, created_at, employees(full_name)")
-          .eq("company_id", ctx.companyId)
-          .eq("status", "pending")
-          .limit(25),
         ctx.auth.supabase
           .from("attendance_alerts")
           .select("id, type, status, employees(full_name)")
           .eq("company_id", ctx.companyId)
           .gte("created_at", dayStart.toISOString())
+          .lt("created_at", dayEnd.toISOString())
           .limit(50),
       ]);
 
     const rows = (assignments ?? []) as unknown as AssignmentRow[];
+    const assignmentIds = rows.map((row) => row.id);
+
+    const { data: requests } = assignmentIds.length
+      ? await ctx.auth.supabase
+          .from("manual_clockin_requests")
+          .select("id, created_at, shift_assignment_id, employees(full_name)")
+          .eq("company_id", ctx.companyId)
+          .eq("status", "pending")
+          .in("shift_assignment_id", assignmentIds)
+          .limit(25)
+      : { data: [] };
     const thresholds = attendanceThresholds(
       (company?.settings as Record<string, unknown>) ?? {}
     );
