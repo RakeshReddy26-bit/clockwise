@@ -1,120 +1,309 @@
 # Clockwise
 
-Workforce management for German staffing, security, cleaning and facility SMBs.
-Shift planning, time tracking and team management for companies whose staff work
-across many client sites.
+Clockwise is a workforce-operations platform for service companies that schedule employees across shifts and client sites.
 
-**Live:** https://clockwise-production-f612.up.railway.app
-German by default, English toggle.
+It is designed for businesses such as facility services, cleaning, logistics, cruise and port services, hospitality, events, temporary staffing, maintenance, retail support and similar field-service operations.
 
-`Next.js 15` · `TypeScript` · `Supabase (Postgres, Auth, Realtime, Storage)` · `Tailwind v4` · `Docker` · `Railway` · `Vitest`
+> **Current status:** functional MVP / demo build. The core workforce workflows are implemented and tested. Some adjacent modules are intentionally still planned and are not production-complete yet.
+
+**Live:** https://clockwise-production-f612.up.railway.app — German by default, English toggle.
+
+`Next.js 15` · `React 19` · `TypeScript` · `Supabase (Postgres, Auth, Realtime, Storage)` · `Tailwind v4` · `Zod` · `Vitest` · `Docker` · `Railway`
 
 ---
 
-## The hard problem: one database, many companies
+## The hard problem
 
-Clockwise is multi-tenant. Every company's shifts, employees and time records
-live in the same Postgres tables. A single missed `WHERE company_id = ...`
-leaks one customer's staff roster to another. Getting that wrong once ends the
-product.
+Clockwise is multi-tenant: every company's shifts, employees and time records live
+in the same PostgreSQL tables. One missed tenant filter leaks a competitor's staff
+roster. Getting that wrong once ends the product.
 
-So authorization is not one check — it is four layers, and the database has the
-last word.
+It is also **concurrent**. Two managers can approve two different employees for the
+same open seat in the same second. An employee can request cancellation while a
+manager is removing them. A shift can be cancelled while an offer on it is being
+accepted. Each of those races either double-books a seat or silently loses a
+worker from a site that needs one.
 
-### Layer 1 — Session
+Both problems are answered the same way: **the database is the authority, not the
+application.** Tenant isolation ends at RLS, and every assignment, offer,
+cancellation and removal path runs as a transactional RPC with row locks — so a
+lost race fails cleanly instead of producing a corrupt roster.
 
-The user is authenticated via Supabase Auth. JWT claims are treated as a
-**convenience only**, never as authority: a claim tells the UI what to render,
-it never decides what the server does.
+Neither claim is left as a claim. The **800+ unit and database-integration tests**
+rebuild scratch PostgreSQL databases from the migration files on every run and
+assert both properties directly.
 
-### Layer 2 — Membership
+---
 
-Every sensitive Server Action re-reads the `company_memberships` table and
-requires an **active** row linking this user to this company. A revoked
-membership takes effect on the next request, not on the next token refresh.
+## What works today
 
-### Layer 3 — Role and resource
+### Manager / dispatcher
 
-The membership's role is checked against the required permission
-(`src/lib/permissions.ts`), then the target resource is checked for tenant and
-ownership match. A manager in company A cannot act on a shift in company B even
-with a valid session and a valid role.
+- Operational dashboard with staffing and attendance signals
+- Create, edit and cancel shifts
+- Multi-seat staffing with required roles and qualifications
+- Candidate eligibility and ranking
+- Send shift offers to eligible employees
+- Employee offer responses and manager approval
+- Atomic assignment creation with vacancy protection
+- Employee cancellation-request review: approve or reject
+- Manager-initiated assignment removal with audit history
+- Automatic vacancy reopening and replacement staffing
+- Geofenced attendance visibility
+- Manual clock-in request review when an employee cannot clock in normally
+- Late / no-show / attendance alerting
+- Vacation-request approval / rejection
+- Sick-leave reporting, confirmation and closure
+- Employee records, qualifications, availability and employment status
+- Employee-account invitation, activation, suspension and reactivation
 
-### Layer 4 — Row-Level Security
+### Employee portal
 
-Postgres RLS policies (`supabase/migrations/0002_rls.sql`) are the final
-boundary. If every layer above were bypassed by a bug, the database still
-returns nothing. Application code is not trusted to be correct.
+- View assigned and upcoming shifts
+- View and respond to shift offers
+- Request cancellation of an assigned shift
+- Clock in and clock out with location verification
+- Request manual clock-in approval when needed
+- View recorded working time
+- Request vacation and report sick leave
+- Maintain supported self-service profile information
+- Manage availability and emergency-contact information
+- Receive assignment / offer / account outcome information
 
-### And it is tested
+### Platform
 
-Tenant isolation is not a claim in a README — it is a Vitest suite. Each run
-**rebuilds a scratch Postgres database from the migrations** and then asserts
-that a user in one tenant cannot read, update or delete another tenant's rows.
-RLS policy changes cannot silently regress.
+- Multi-tenant company isolation
+- Role-based access control
+- German-first UI with English toggle
+- Responsive manager and employee shells
+- Realtime refresh on operational surfaces where implemented
+- Railway deployment with `/api/health` healthcheck
 
-```bash
-npm run typecheck
-npm run test
+## Planned / not yet complete
+
+The repository already contains placeholders or schema groundwork for several broader workforce modules, but they should **not** be presented as finished functionality yet:
+
+- Calendar
+- Documents / certificates / payroll documents
+- Messaging
+- Recruitment / applications
+- News
+- Jobs administration UI
+- Settings UI
+- Broader payroll / timesheet approval workflows
+
+Clockwise currently focuses on the operational path from **shift planning → staffing → assignment → attendance → cancellation / absence → replacement**.
+
+## Tech stack
+
+- **Next.js 15** — App Router, TypeScript, Turbopack
+- **React 19**
+- **Tailwind CSS v4** with shadcn-style UI components
+- **Supabase** — PostgreSQL, Auth, Realtime and Storage
+- **next-intl** — German / English localization
+- **Zod** — validation
+- **Vitest + PostgreSQL integration tests**
+- **Railway** — application hosting
+
+## Architecture and authorization
+
+Clockwise treats the database as the final authority for tenant isolation and sensitive state transitions.
+
+Sensitive actions follow this chain:
+
+```text
+authenticated user
+  → active company membership
+  → application permission check
+  → tenant / ownership validation
+  → transactional RPC / Server Action
+  → PostgreSQL RLS and database invariants
 ```
 
----
+Important design rules:
 
-## Secrets
+- JWT claims are not treated as the authoritative role source.
+- Active `company_memberships` rows drive access.
+- RLS is the final tenant-isolation layer.
+- Scheduling mutations use explicit permissions such as `scheduling.manage`.
+- Critical assignment / offer / cancellation paths use row locks and transactional RPCs.
+- A pending cancellation request still occupies the staffing seat until a manager approves it.
+- Worked-time and operational-history deletion paths are guarded.
+- Employee self-service mutations are restricted at both policy and trigger level.
+- Suspended memberships no longer resolve an operational employee identity.
+- The Supabase service-role key is server-only and never exposed with a `NEXT_PUBLIC_` prefix.
 
-- `SUPABASE_SERVICE_ROLE_KEY` is runtime-only and never carries a
-  `NEXT_PUBLIC_` prefix.
-- It is guarded by `server-only` in `src/lib/supabase/admin.ts`, so importing it
-  from a client component is a **build error**, not a production incident.
-- Only `.env.example` is committed, and it holds empty keys.
+## Database migrations
 
----
+The current schema is built through **17 ordered migrations**:
 
-## Localisation
+| Migration | Purpose |
+|---|---|
+| `0001_schema.sql` | Core multi-tenant workforce schema |
+| `0002_rls.sql` | Initial RLS and authorization helpers |
+| `0003_auth_profile_trigger.sql` | Auth user → profile creation |
+| `0004_geofencing.sql` | Locations, geofenced attendance and manual clock-in groundwork |
+| `0005_operations.sql` | Operations / attendance extensions |
+| `0006_shift_offers.sql` | Shift-offer workflow |
+| `0007_shift_offer_approval.sql` | Transactional offer approval |
+| `0008_offer_shift_visibility.sql` | Employee visibility for offered shifts |
+| `0009_cancellation_decision.sql` | Employee cancellation request + manager decision |
+| `0010_manager_assignment_removal.sql` | Manager-initiated assignment removal |
+| `0011_shift_lifecycle.sql` | Shift create / edit / cancel lifecycle |
+| `0012_scheduling_authorization.sql` | Scheduling authorization hardening + history guards |
+| `0013_employee_mutation_integrity.sql` | Employee time-entry / assignment mutation integrity |
+| `0014_vacation_cancelled_status.sql` | Vacation withdrawal state |
+| `0015_absence.sql` | Vacation and sick-leave workflows |
+| `0016_employee_management.sql` | Employee management and tenant-integrity hardening |
+| `0017_account_lifecycle.sql` | Invitation and access lifecycle |
 
-German is the default locale, English is a cookie-based toggle, via `next-intl`.
-The target customers are German SMBs, so German is not an afterthought
-translation layer — it is the base language of the product.
+For a **fresh database**, apply every migration in filename order from `0001` through `0017`.
 
----
+> **Important:** do not blindly re-run migrations against an existing project. Some migrations create named policies or other objects that are intended to be applied once in sequence. Check the deployed database state before reapplying anything.
 
-## Running it
+## Local development
 
 ```bash
-npm install
-cp .env.example .env.local     # fill in your Supabase values
+git clone https://github.com/RakeshReddy26-bit/clockwise.git
+cd clockwise
+npm ci
+cp .env.example .env.local
 npm run dev
 ```
 
-**Supabase setup (once)** — create a project in the EU/Frankfurt region, then run
-the migrations in order:
+Required environment variables:
 
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+NEXT_PUBLIC_SITE_URL=
 ```
-supabase/migrations/0001_schema.sql
-supabase/migrations/0002_rls.sql
-supabase/migrations/0003_auth_profile_trigger.sql
+
+`NEXT_PUBLIC_SITE_URL` is required for the employee invitation flow in deployed environments.
+
+## Supabase setup
+
+1. Create a Supabase project in an EU region (Frankfurt is the intended deployment region).
+2. Apply `supabase/migrations/0001_schema.sql` through `0017_account_lifecycle.sql` in order.
+3. Add the required environment variables to `.env.local` and Railway.
+4. Seed demo data when needed:
+
+```bash
+npm run seed
 ```
 
-Seed demo data with `npm run seed` (needs `SUPABASE_SERVICE_ROLE_KEY`).
+The seed requires `SUPABASE_SERVICE_ROLE_KEY` and should be used deliberately; do not treat it as a migration.
 
-**Deployment** — Railway builds from the `Dockerfile` via `railway.json`.
-Health check at `/api/health`. The two `NEXT_PUBLIC_` variables are also needed
-as build args; Railway passes service variables into Docker builds
-automatically.
+## Employee invitation setup
 
----
+The invitation flow uses a server-side `/auth/confirm` route with Supabase `verifyOtp()` and a token hash.
 
-## Layout
+For deployed invitations:
 
+1. Set `NEXT_PUBLIC_SITE_URL` to the deployed application origin.
+2. Allow the `/auth/confirm` redirect in Supabase Auth settings.
+3. Configure the Supabase **Invite user** email template to send `{{ .TokenHash }}` to the application confirmation route rather than relying on a URL fragment that the server cannot read.
+
+The route expects the equivalent of:
+
+```text
+/auth/confirm?token_hash={{ .TokenHash }}&type=invite&next=/welcome
 ```
-src/app/(auth)      login and registration
-src/app/(portal)    employee-facing views
-src/app/(manager)   manager-facing views
-src/app/actions     Server Actions — every one re-validates authorization
-src/app/api         health check and route handlers
-src/lib/permissions role → permission mapping
-src/lib/supabase    server, browser and admin (server-only) clients
-src/messages        de / en translation catalogues
-supabase/migrations schema, RLS policies, auth trigger
-tests/db            tenant-isolation tests against a scratch Postgres
+
+Use a production SMTP provider before treating invitation email delivery as production-ready.
+
+## Demo / maintenance scripts
+
+Targeted scripts currently available:
+
+```bash
+npm run backfill:coords
+npm run rename:demo-company
+npm run generalize:demo-data -- --dry
+npm run generalize:demo-data
+npm run add:gepack-demo
+npm run add:kiel-demo
 ```
+
+Purpose:
+
+- `backfill:coords` — populate coordinates and geofence radii for existing worksites
+- `rename:demo-company` — rename the demo company row
+- `generalize:demo-data -- --dry` — preview demo-data generalization
+- `generalize:demo-data` — apply demo-data generalization
+- `add:gepack-demo` — add the GE-PACK demo client / site / shifts
+- `add:kiel-demo` — add Kiel / Rendsburg-Eckernförde demo geography and shifts
+
+These maintenance scripts are intended to be targeted and non-destructive; review the script before running it against real tenant data.
+
+## Localization
+
+Static UI copy lives in:
+
+```text
+src/messages/de.json
+src/messages/en.json
+```
+
+System-controlled database values are localized through stable taxonomy keys in `src/lib/taxonomy.ts`.
+
+| Namespace | Covers |
+|---|---|
+| `terms.*` | departments, shift roles, employee positions |
+| `sites.*` | known demo worksites |
+| `roles.*` | membership-role enums |
+
+Tenant-created names, addresses, instructions and free text remain exactly as stored and are never rewritten by localization.
+
+## Testing
+
+Clockwise has **800+ automated unit and database-integration tests** covering authorization, tenant isolation, scheduling, offers, cancellation, removal, geofencing, attendance, absences, employees and account lifecycle.
+
+Run:
+
+```bash
+npm run typecheck
+npm test
+npm run lint
+npm run build
+```
+
+Database integration tests expect a local PostgreSQL instance with the test owner configured by `tests/db/helpers.ts`. The test harness rebuilds isolated scratch databases from the migration files.
+
+## Deployment with Railway
+
+1. Connect the GitHub repository to Railway.
+2. Deploy the `main` branch.
+3. Configure:
+
+```text
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+NEXT_PUBLIC_SITE_URL
+SUPABASE_SERVICE_ROLE_KEY
+```
+
+4. Keep `SUPABASE_SERVICE_ROLE_KEY` runtime-only and server-side.
+5. Use `/api/health` as the Railway healthcheck.
+
+## Project direction
+
+Clockwise is currently a focused workforce-operations MVP rather than a full payroll / ERP replacement.
+
+The strongest implemented workflow is:
+
+```text
+create shift
+→ identify eligible employees
+→ send offer
+→ employee responds
+→ manager approves
+→ assignment created
+→ employee clocks in / out
+→ cancellation or absence handled
+→ vacancy reopens
+→ replacement employee staffed
+```
+
+That operational loop is the part of the product currently intended for real-world demos and pilot discussions.
