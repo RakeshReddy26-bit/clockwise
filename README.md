@@ -6,6 +6,10 @@ It is designed for businesses such as facility services, cleaning, logistics, cr
 
 > **Current status:** functional MVP / demo build. The core workforce workflows are implemented and tested. Some adjacent modules are intentionally still planned and are not production-complete yet.
 
+> **Licence:** Clockwise is commercial software, not open source. The source is
+> public so that prospective employers and clients can read it. Reading is
+> permitted; deploying, reusing or redistributing it is not. See [LICENSE](LICENSE).
+
 **Live:** https://clockwise-production-f612.up.railway.app — German by default, English toggle.
 
 `Next.js 15` · `React 19` · `TypeScript` · `Supabase (Postgres, Auth, Realtime, Storage)` · `Tailwind v4` · `Zod` · `Vitest` · `Docker` · `Railway`
